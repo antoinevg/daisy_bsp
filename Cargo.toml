@@ -1,0 +1,25 @@
+[package]
+name = "daisy_bsp"
+version = "0.0.1"
+authors = ["Antoine van Gelder <antoine@flowdsp.io>"]
+edition = "2018"
+license = "AGPL"
+description = "A board support package for the Electro-Smith Daisy Seed"
+repository = "https://github.com/antoinevg/daisy_bsp"
+documentation = "https://github.com/antoinevg/daisy_bsp/wiki"
+categories = [
+    "embedded",
+    "hardware-support",
+    "no-std",
+]
+keywords = [
+    "cortex-m",
+    "bsp",
+    "stm32h7xx",
+    "daisy",
+]
+readme = "README.md"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
