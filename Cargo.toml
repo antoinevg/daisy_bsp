@@ -28,7 +28,7 @@ targets = ["thumbv7em-none-eabihf"]
 # - dependencies --------------------------------------------------------------
 
 [dependencies]
-cortex-m = "0.6.3"
+cortex-m = "0.6.4"
 cortex-m-rt = { version = "0.6.13", features = ["device"] }
 
 # branch = dma
@@ -54,7 +54,7 @@ optional = true
 # - dev dependencies ----------------------------------------------------------
 
 [dev-dependencies]
-panic-semihosting = { version = "0.5.3" }
+panic-semihosting = { version = "0.5.5" }
 cortex-m-semihosting = { version = "0.3.5" }
 
 
