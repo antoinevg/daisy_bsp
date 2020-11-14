@@ -1,5 +1,3 @@
-use cortex_m_semihosting::hprintln;
-
 use stm32h7xx_hal as hal;
 use hal::gpio;
 use hal::time;
@@ -485,9 +483,9 @@ impl<'a> Interface<'a>
             sai1.enable_dma(SaiChannel::ChannelA);
 
             // wait until sai1's fifo starts to receive data
-            hprintln!("sai fifo waiting to receive data").unwrap();
+            //hprintln!("sai fifo waiting to receive data").unwrap();
             while sai1_rb.cha.sr.read().flvl().is_empty() { }
-            hprintln!("sai fifo receiving data").unwrap();
+            //hprintln!("sai fifo receiving data").unwrap();
 
             sai1.enable();
         });
@@ -520,9 +518,9 @@ impl<'a> Interface<'a>
         while sai1_pac.chb.cr1.read().dmaen().is_disabled() {}
 
         // wait till SAI1 fifo is not empty - TODO timeout
-        hprintln!("sai fifo waiting to receive data").unwrap();
+        //hprintln!("sai fifo waiting to receive data").unwrap();
         while sai1_pac.cha.sr.read().flvl().is_empty() { }
-        hprintln!("sai fifo receiving data").unwrap();
+        //hprintln!("sai fifo receiving data").unwrap();
 
         // flush SAI1 blocks
         sai1_pac.cha.cr2.modify(|_, w| w.fflush().flush());
@@ -592,18 +590,18 @@ fn _dma1_str1_pac() {
 
     } else if lisr.teif1().is_error() {
         dma1.lifcr.write(|w| w.cteif1().clear());
-        hprintln!("dma1_stream1::irq error: teif1").unwrap();
+        //hprintln!("dma1_stream1::irq error: teif1").unwrap();
         return;
     } else if lisr.dmeif1().is_error() {
         dma1.lifcr.write(|w| w.cdmeif1().clear());
-        hprintln!("dma1_stream1::irq error: cdmeif1").unwrap();
+        //hprintln!("dma1_stream1::irq error: cdmeif1").unwrap();
         return;
     } else if lisr.feif1().is_error() {
         dma1.lifcr.write(|w| w.cfeif1().clear());
-        hprintln!("dma1_stream1::irq error: feif1").unwrap();
+        //hprintln!("dma1_stream1::irq error: feif1").unwrap();
         return;
     } else {
-        hprintln!("dma1_stream1::irq error: unknown - {}", lisr.bits()).unwrap();
+        //hprintln!("dma1_stream1::irq error: unknown - {}", lisr.bits()).unwrap();
         return;
     };
 

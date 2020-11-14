@@ -1,5 +1,3 @@
-use cortex_m_semihosting::hprintln;
-
 use stm32h7xx_hal as hal;
 use hal::prelude::*;
 use hal::rcc;
@@ -81,16 +79,16 @@ fn USART1() {
     let isr = usart1.isr.read();
     if isr.ore().bit_is_set() {
         usart1.icr.write(|w| w.orecf().clear());
-        hprintln!("USART1::irq -> overrun error").unwrap();
+        //hprintln!("USART1::irq -> overrun error").unwrap();
     } else if isr.pe().bit_is_set() {
         usart1.icr.write(|w| w.pecf().clear());
-        hprintln!("USART1::irq -> parity error").unwrap();
+        //hprintln!("USART1::irq -> parity error").unwrap();
     } else if isr.fe().bit_is_set() {
         usart1.icr.write(|w| w.fecf().clear());
-        hprintln!("USART1::irq -> frame error").unwrap();
+        //hprintln!("USART1::irq -> frame error").unwrap();
     } else if isr.nf().bit_is_set() {
         usart1.icr.write(|w| w.ncf().clear());
-        hprintln!("USART1::irq -> noise error").unwrap();
+        //hprintln!("USART1::irq -> noise error").unwrap();
     }
 
     if isr.rxne().bit_is_set() {
