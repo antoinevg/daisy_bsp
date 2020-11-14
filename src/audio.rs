@@ -541,36 +541,10 @@ impl<'a> Interface<'a>
 
 static mut INTERFACE_PTR: Option<*const OpaqueInterface> = None;
 
-#[inline(always)]
-fn dma1_str1_hal() {
-    if unsafe { INTERFACE_PTR.is_none() } {
-        return;
-    }
-
-    // reconstitute mutable reference to Interface
-    let interface_ptr: *const OpaqueInterface = unsafe { INTERFACE_PTR }.unwrap();
-    let interface_ptr: *mut Interface = unsafe {
-        core::mem::transmute::<*const OpaqueInterface,
-                               *mut Interface>(interface_ptr)
-    };
-    let interface: &mut Interface = unsafe { &mut *interface_ptr };
-
-    let transfer = interface.hal_dma1_stream1.as_mut().unwrap();
-
-    let skip = if transfer.get_half_transfer_flag() {
-        transfer.clear_half_transfer_interrupt();
-        (0, HALF_DMA_BUFFER_LENGTH)
-
-    } else if transfer.get_transfer_complete_flag() {
-        transfer.clear_transfer_complete_interrupt();
-        (HALF_DMA_BUFFER_LENGTH, 0)
-
-    } else {
-        // TODO handle error flags once HAL supports them
-        return;
-    };
-
-    dma_common(skip);
+#[interrupt]
+fn DMA1_STR1() {
+    //dma1_str1_pac();
+    dma1_str1_hal();
 }
 
 
@@ -602,6 +576,39 @@ fn _dma1_str1_pac() {
         return;
     } else {
         //hprintln!("dma1_stream1::irq error: unknown - {}", lisr.bits()).unwrap();
+        return;
+    };
+
+    dma_common(skip);
+}
+
+
+#[inline(always)]
+fn dma1_str1_hal() {
+    if unsafe { INTERFACE_PTR.is_none() } {
+        return;
+    }
+
+    // reconstitute mutable reference to Interface
+    let interface_ptr: *const OpaqueInterface = unsafe { INTERFACE_PTR }.unwrap();
+    let interface_ptr: *mut Interface = unsafe {
+        core::mem::transmute::<*const OpaqueInterface,
+                               *mut Interface>(interface_ptr)
+    };
+    let interface: &mut Interface = unsafe { &mut *interface_ptr };
+
+    let transfer = interface.hal_dma1_stream1.as_mut().unwrap();
+
+    let skip = if transfer.get_half_transfer_flag() {
+        transfer.clear_half_transfer_interrupt();
+        (0, HALF_DMA_BUFFER_LENGTH)
+
+    } else if transfer.get_transfer_complete_flag() {
+        transfer.clear_transfer_complete_interrupt();
+        (HALF_DMA_BUFFER_LENGTH, 0)
+
+    } else {
+        // TODO handle error flags once HAL supports them
         return;
     };
 
@@ -682,11 +689,4 @@ fn dma_common(skip: (usize, usize)) {
         dma_index += 2;
         block_index += 1;
     }
-}
-
-
-#[interrupt]
-fn DMA1_STR1() {
-    //dma1_str1_pac();
-    dma1_str1_hal();
 }
