@@ -20,6 +20,116 @@ keywords = [
 ]
 readme = "README.md"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package.metadata.docs.rs]
+features = [ "seed", "pod", "petal", "patch", "field" ]
+targets = ["thumbv7em-none-eabihf"]
+
+
+# - dependencies --------------------------------------------------------------
 
 [dependencies]
+cortex-m = "0.6.3"
+cortex-m-rt = { version = "0.6.13", features = ["device"] }
+#stm32h7xx-hal = { version = "0.8.0", features = [ "stm32h750v", "rt", "revision_v" ] }
+stm32h7xx-hal = { features = [ "stm32h750v", "rt", "revision_v" ], git = "https://github.com/stm32-rs/stm32h7xx-hal.git", branch = "dma" }
+
+heapless = { version = "0.5.6", default_features = false }
+static-alloc = "0.2.1"
+without-alloc = "0.2.1"
+cty = "0.2.1"
+
+cortex-m-semihosting = { version = "0.3.5" } # TODO remove
+
+[dependencies.dsp]
+version = "0.1.0"
+path = "../../seisiun-synth.git/dsp"
+optional = true
+
+[dependencies.instrument]
+version = "0.1.0"
+path = "../../seisiun-synth.git/instrument"
+optional = true
+
+
+# - dev dependencies ----------------------------------------------------------
+
+[dev-dependencies]
+panic-semihosting = { version = "0.5.3" }
+#cortex-m-semihosting = { version = "0.3.5" }
+
+
+# - features ------------------------------------------------------------------
+
+[features]
+default = [ "seed" ]
+seed = []
+pod = []
+petal = []
+patch = []
+field = []
+uses_dsp = [ "dsp" ]
+uses_instrument = [ "instrument" ]
+
+
+# - profiles ------------------------------------------------------------------
+
+[profile.dev]
+debug = true
+incremental = false
+opt-level = "s" # optimize for binary size
+#opt-level = 1
+#opt-level = 0
+
+[profile.release]
+debug = true
+opt-level = "s" #  optimize for binary size
+
+
+# - examples ------------------------------------------------------------------
+
+[[example]]
+name = "blinky_pac"
+required-features = ["seed"]
+
+[[example]]
+name = "blinky_hal"
+required-features = ["seed"]
+
+[[example]]
+name = "blinky_bsp"
+required-features = ["seed"]
+
+[[example]]
+name = "button"
+required-features = ["seed"]
+
+[[example]]
+name = "audio_passthrough"
+required-features = ["seed"]
+
+[[example]]
+name = "serial"
+required-features = ["seed"]
+
+
+# - adc20 examples ------------------------------------------------------------
+
+[[example]]
+name = "adc20_1"
+required-features = ["seed"]
+
+[[example]]
+name = "adc20_2"
+required-features = ["seed", "uses_dsp"]
+
+[[example]]
+name = "adc20_3"
+required-features = ["seed", "uses_dsp", "uses_instrument"]
+
+[[example]]
+name = "adc20_typestates"
+required-features = ["seed"]
+
+[[example]]
+name = "adc20_safety"
+required-features = ["seed", "uses_dsp", "uses_instrument"]
