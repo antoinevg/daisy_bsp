@@ -75,8 +75,8 @@ pod = []
 petal = []
 patch = []
 field = []
-#uses_num = [ "num", "num-derive", "num-traits" ]
-uses_num = [ "num-derive"]
+uses_num = [ "num", "num-derive", "num-traits" ]
+
 
 # - profiles ------------------------------------------------------------------
 
