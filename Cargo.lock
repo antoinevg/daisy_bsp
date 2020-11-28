@@ -124,18 +124,8 @@ dependencies = [
  "num-traits",
  "panic-semihosting",
  "static-alloc",
- "stm32h7xx-hal 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "stm32h7xx-hal 0.8.0 (git+https://github.com/stm32-rs/stm32h7xx-hal.git?rev=0bfeeca4ce120c1b7c6d140a7da73a4372b874d8)",
+ "stm32h7xx-hal",
  "without-alloc",
-]
-
-[[package]]
-name = "embedded-dma"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46c8c02e4347a0267ca60813c952017f4c5948c232474c6010a381a337f1bda4"
-dependencies = [
- "stable_deref_trait",
 ]
 
 [[package]]
@@ -274,9 +264,9 @@ dependencies = [
 
 [[package]]
 name = "panic-semihosting"
-version = "0.5.5"
+version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dec3d34497423a2b3a4aa0c6dd107eab7693711329039f84f0f0ada598f22d28"
+checksum = "c3d55dedd501dfd02514646e0af4d7016ce36bc12ae177ef52056989966a1eec"
 dependencies = [
  "cortex-m",
  "cortex-m-semihosting",
@@ -373,23 +363,6 @@ dependencies = [
  "cast",
  "cortex-m",
  "cortex-m-rt",
- "embedded-hal",
- "nb 1.0.0",
- "paste",
- "stm32h7",
- "void",
-]
-
-[[package]]
-name = "stm32h7xx-hal"
-version = "0.8.0"
-source = "git+https://github.com/stm32-rs/stm32h7xx-hal.git?rev=0bfeeca4ce120c1b7c6d140a7da73a4372b874d8#0bfeeca4ce120c1b7c6d140a7da73a4372b874d8"
-dependencies = [
- "bare-metal 1.0.0",
- "cast",
- "cortex-m",
- "cortex-m-rt",
- "embedded-dma",
  "embedded-hal",
  "nb 1.0.0",
  "paste",

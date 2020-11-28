@@ -1,6 +1,6 @@
 [package]
 name = "daisy_bsp"
-version = "0.0.2"
+version = "0.1.0"
 authors = ["Antoine van Gelder <antoine@flowdsp.io>"]
 edition = "2018"
 license = "AGPL-3.0-or-later"
@@ -73,7 +73,7 @@ optional = true
 # - dev dependencies ----------------------------------------------------------
 
 [dev-dependencies]
-panic-semihosting = { version = "0.5.5" }
+panic-semihosting = { version = "0.5.6" }
 cortex-m-semihosting = { version = "0.3.5" }
 
 
