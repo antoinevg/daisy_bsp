@@ -5,7 +5,7 @@ use panic_semihosting as _;
 use cortex_m_rt::entry;
 use cortex_m::asm;
 
-use stm32h7xx_hal as hal;
+use daisy_bsp::hal;
 use hal::{pac, prelude::*};
 use hal::rcc::PllConfigStrategy;
 use hal::hal as embedded_hal;

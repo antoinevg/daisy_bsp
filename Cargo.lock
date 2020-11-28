@@ -124,7 +124,8 @@ dependencies = [
  "num-traits",
  "panic-semihosting",
  "static-alloc",
- "stm32h7xx-hal",
+ "stm32h7xx-hal 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "stm32h7xx-hal 0.8.0 (git+https://github.com/stm32-rs/stm32h7xx-hal.git?rev=0bfeeca4ce120c1b7c6d140a7da73a4372b874d8)",
  "without-alloc",
 ]
 
@@ -360,6 +361,23 @@ dependencies = [
  "cortex-m",
  "cortex-m-rt",
  "vcell",
+]
+
+[[package]]
+name = "stm32h7xx-hal"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2df47cc6248aa85e5d5762f8755448270fd406b0a155557671de46cb5aef4546"
+dependencies = [
+ "bare-metal 1.0.0",
+ "cast",
+ "cortex-m",
+ "cortex-m-rt",
+ "embedded-hal",
+ "nb 1.0.0",
+ "paste",
+ "stm32h7",
+ "void",
 ]
 
 [[package]]

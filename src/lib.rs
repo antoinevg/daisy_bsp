@@ -8,7 +8,11 @@
 #![deny(warnings)]
 #![no_std]
 
+#[cfg(not(feature = "audio_hal"))]
 pub use stm32h7xx_hal as hal;
+#[cfg(feature = "audio_hal")]
+pub use stm32h7xx_hal_dma as hal;
+
 pub use hal::hal as embedded_hal;
 pub use hal::pac;
 use hal::prelude::*;
@@ -36,8 +40,14 @@ pub mod clocks;
 pub use clocks::configure as configure_clocks;
 pub mod led;
 pub mod pin;
-pub mod audio;
 pub mod usart;
+
+#[cfg(not(feature = "audio_hal"))]
+pub mod audio;
+#[cfg(feature = "audio_hal")]
+pub mod audio_hal;
+#[cfg(feature = "audio_hal")]
+pub use crate::audio_hal as audio;
 
 
 // - Board --------------------------------------------------------------------
@@ -108,6 +118,12 @@ impl<'a> Board<'a> {
             gpioe.pe6.into_alternate_af6(),     // SD_A
             gpioe.pe3.into_alternate_af6(),     // SD_B
         );
+
+        #[cfg(not(feature = "audio_hal"))]
+        let sai1_interface = audio::Interface::init(&ccdr.clocks,
+                                                    sai1_rec,
+                                                    ak4556_pins).unwrap();
+        #[cfg(feature = "audio_hal")]
         let sai1_interface = audio::Interface::init(&ccdr.clocks,
                                                     sai1_rec,
                                                     ak4556_pins,

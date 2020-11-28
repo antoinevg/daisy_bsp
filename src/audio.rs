@@ -1,8 +1,6 @@
 use stm32h7xx_hal as hal;
 use hal::gpio;
 use hal::time;
-use hal::dma;
-use hal::sai::{ self, SaiI2sExt, SaiChannel };
 
 use hal::hal as embedded_hal;
 use embedded_hal::digital::v2::OutputPin;
@@ -37,16 +35,6 @@ type Sai1Pins = (
     gpio::gpioe::PE3<gpio::Alternate<gpio::AF6>>,     // SD_B
 );
 
-type TransferDma1Str0 = dma::Transfer<dma::dma::Stream0<pac::DMA1>,
-                                      pac::SAI1,
-                                      dma::MemoryToPeripheral,
-                                      &'static mut [u32; DMA_BUFFER_LENGTH]>;
-
-type TransferDma1Str1 = dma::Transfer<dma::dma::Stream1<pac::DMA1>,
-                                      pac::SAI1,
-                                      dma::PeripheralToMemory,
-                                      &'static mut [u32; DMA_BUFFER_LENGTH]>;
-
 #[repr(C)]
 pub struct OpaqueInterface { _private: [u8; 0] }
 
@@ -67,113 +55,17 @@ pub struct Interface<'a> {
     pub fs: time::Hertz,
     closure: Option<Box<dyn FnMut(f32, &mut Block) + 'a>>,
     ak4556_reset: Option<gpio::gpiob::PB11<gpio::Output<gpio::PushPull>>>,
-    hal_dma1_stream0: Option<TransferDma1Str0>,
-    hal_dma1_stream1: Option<TransferDma1Str1>,
-    hal_sai1: Option<hal::sai::Sai<pac::SAI1, hal::sai::I2S>>,
     _marker: core::marker::PhantomData<&'a *const ()>,
 }
 
 
 impl<'a> Interface<'a>
 {
-    pub fn new() -> Interface<'a> {
-        Self {
-            fs: FS,
-            closure: None,
-            ak4556_reset: None,
-            hal_dma1_stream0: None,
-            hal_dma1_stream1: None,
-            hal_sai1: None,
-            _marker: core::marker::PhantomData,
-        }
-    }
-
     pub fn init(
         clocks: &hal::rcc::CoreClocks,
         rec: hal::rcc::rec::Sai1, // reset and enable control
-        pins: Sai1Pins,
-        dma1_hal: hal::rcc::rec::Dma1
-    ) -> Result<Interface<'a>, Error> {
-
-        // - configure dma1 ---------------------------------------------------
-
-        let dma1_streams = dma::dma::StreamsTuple::new(unsafe { pac::Peripherals::steal().DMA1 }, dma1_hal);
-
-        // dma1 stream 0
-        let tx_buffer: &'static mut [u32; DMA_BUFFER_LENGTH] = unsafe { &mut TX_BUFFER };
-        let dma_config = dma::dma::DmaConfig::default()
-            .priority(dma::config::Priority::High)
-            .memory_increment(true)
-            .peripheral_increment(false)
-            .circular_buffer(true)
-            .fifo_enable(false);
-        let dma1_str0: dma::Transfer<_, _, dma::MemoryToPeripheral, _> = dma::Transfer::init(
-            dma1_streams.0,
-            unsafe { pac::Peripherals::steal().SAI1 },
-            tx_buffer,
-            None,
-            dma_config,
-        );
-
-        // dma1 stream 1
-        let rx_buffer: &'static mut [u32; DMA_BUFFER_LENGTH] = unsafe { &mut RX_BUFFER };
-        let dma_config = dma_config.transfer_complete_interrupt(true)
-                                   .half_transfer_interrupt(true);
-        let dma1_str1: dma::Transfer<_, _, dma::PeripheralToMemory, _> = dma::Transfer::init(
-            dma1_streams.1,
-            unsafe { pac::Peripherals::steal().SAI1 },
-            rx_buffer,
-            None,
-            dma_config,
-        );
-
-        // - configure sai1 ---------------------------------------------------
-
-        let sai1_tx_config = sai::I2SChanConfig::new(sai::I2SDir::Tx)
-            .set_frame_sync_active_high(true)
-            .set_clock_strobe(sai::I2SClockStrobe::Falling);
-
-        let sai1_rx_config = sai::I2SChanConfig::new(sai::I2SDir::Rx)
-            .set_sync_type(sai::I2SSync::Internal)
-            .set_frame_sync_active_high(true)
-            .set_clock_strobe(sai::I2SClockStrobe::Rising);
-
-        let sai1_pins = (
-            pins.1,
-            pins.2,
-            pins.3,
-            pins.4,
-            Some(pins.5),
-        );
-
-        let sai1 = unsafe { pac::Peripherals::steal().SAI1 }.i2s_ch_a(
-            sai1_pins,
-            FS,
-            sai::I2SDataSize::BITS_24,
-            rec,
-            clocks,
-            sai1_tx_config,
-            Some(sai1_rx_config),
-        );
-
-        Ok(Self {
-            fs: FS,
-            closure: None,
-            ak4556_reset: Some(pins.0),
-            hal_dma1_stream0: Some(dma1_str0),
-            hal_dma1_stream1: Some(dma1_str1),
-            hal_sai1: Some(sai1),
-            _marker: core::marker::PhantomData,
-        })
-    }
-
-
-    pub fn init_pac(
-        &self,
-        clocks: &hal::rcc::CoreClocks,
-        rec: hal::rcc::rec::Sai1, // reset and enable control
         pins: Sai1Pins
-    ) -> Result<(), Error> {
+    ) -> Result<Interface<'a>, Error> {
 
         // - Peripherals ------------------------------------------------------
 
@@ -309,9 +201,9 @@ impl<'a> Interface<'a>
                      ccdr.peripheral.SAI1.kernel_clk_mux(hal::rcc::rec::Sai1ClkSel::PLL3_P) ?");
         let clock_ratio = if master_oversampling { 512 } else { 256 };
         let mck_div = if nodiv {
-            (sai_ck_a.0 * 10) / (self.fs.0 * frame_length as u32)
+            (sai_ck_a.0 * 10) / (FS.0 * frame_length as u32)
         } else {
-            (sai_ck_a.0 * 10) / (self.fs.0 * clock_ratio as u32)
+            (sai_ck_a.0 * 10) / (FS.0 * clock_ratio as u32)
         };
         let mck_div = mck_div / 10;
         let mck_div: u8 = mck_div.try_into()
@@ -427,15 +319,12 @@ impl<'a> Interface<'a>
              .syncin().bits(0)                         // SAI_SYNCEXT_DISABLE
         });
 
-        // - AK4556 -----------------------------------------------------------
-
-        let mut ak4556_reset = pins.0;
-        ak4556_reset.set_low().unwrap();
-        use cortex_m::asm;
-        asm::delay(480_000);     // ~ 1ms (datasheet specifies minimum 150ns)
-        ak4556_reset.set_high().unwrap();
-
-        Ok(())
+        Ok(Self {
+            fs: FS,
+            closure: None,
+            ak4556_reset: Some(pins.0),
+            _marker: core::marker::PhantomData,
+        })
     }
 
 
@@ -449,51 +338,20 @@ impl<'a> Interface<'a>
         };
         unsafe { INTERFACE_PTR = Some(opaque_interface_ptr); }
 
-        //self.start_pac()?;
-        self.start_hal()?;
-
-        Ok(self) // TODO TypeState for a started interface
-    }
-
-    pub fn start_hal(&mut self) -> Result<(), Error> {
-
-        // - AK4556 -----------------------------------------------------------
-
+        // reset AK4556
         let ak4556_reset = self.ak4556_reset.as_mut().unwrap();
         ak4556_reset.set_low().unwrap();
         use cortex_m::asm;
         asm::delay(480_000);     // ~ 1ms (datasheet specifies minimum 150ns)
         ak4556_reset.set_high().unwrap();
 
+        // start audio
+        self.start_audio()?;
 
-        // - start audio ------------------------------------------------------
-
-        // unmask interrupt handler for dma 1, stream 1
-        unsafe { pac::NVIC::unmask(pac::Interrupt::DMA1_STR1); }
-
-        let dma1_str0 = self.hal_dma1_stream0.as_mut().unwrap();
-        let dma1_str1 = self.hal_dma1_stream1.as_mut().unwrap();
-        let sai1 = self.hal_sai1.as_mut().unwrap();
-
-        dma1_str1.start(|_sai1_rb| {
-            sai1.enable_dma(SaiChannel::ChannelB);
-        });
-
-        dma1_str0.start(|sai1_rb| {
-            sai1.enable_dma(SaiChannel::ChannelA);
-
-            // wait until sai1's fifo starts to receive data
-            //hprintln!("sai fifo waiting to receive data").unwrap();
-            while sai1_rb.cha.sr.read().flvl().is_empty() { }
-            //hprintln!("sai fifo receiving data").unwrap();
-
-            sai1.enable();
-        });
-
-        Ok(())
+        Ok(self) // TODO TypeState for a started interface
     }
 
-    pub fn start_pac(&mut self) -> Result<(), Error> {
+    fn start_audio(&mut self) -> Result<(), Error> {
         let dma1_pac = unsafe { pac::Peripherals::steal().DMA1 };
         let sai1_pac = unsafe { pac::Peripherals::steal().SAI1 };
 
@@ -543,13 +401,6 @@ static mut INTERFACE_PTR: Option<*const OpaqueInterface> = None;
 
 #[interrupt]
 fn DMA1_STR1() {
-    //dma1_str1_pac();
-    dma1_str1_hal();
-}
-
-
-#[inline(always)]
-fn _dma1_str1_pac() {
     let dma1 = unsafe { pac::Peripherals::steal().DMA1 };
 
     let lisr = dma1.lisr.read();
@@ -576,39 +427,6 @@ fn _dma1_str1_pac() {
         return;
     } else {
         //hprintln!("dma1_stream1::irq error: unknown - {}", lisr.bits()).unwrap();
-        return;
-    };
-
-    dma_common(skip);
-}
-
-
-#[inline(always)]
-fn dma1_str1_hal() {
-    if unsafe { INTERFACE_PTR.is_none() } {
-        return;
-    }
-
-    // reconstitute mutable reference to Interface
-    let interface_ptr: *const OpaqueInterface = unsafe { INTERFACE_PTR }.unwrap();
-    let interface_ptr: *mut Interface = unsafe {
-        core::mem::transmute::<*const OpaqueInterface,
-                               *mut Interface>(interface_ptr)
-    };
-    let interface: &mut Interface = unsafe { &mut *interface_ptr };
-
-    let transfer = interface.hal_dma1_stream1.as_mut().unwrap();
-
-    let skip = if transfer.get_half_transfer_flag() {
-        transfer.clear_half_transfer_interrupt();
-        (0, HALF_DMA_BUFFER_LENGTH)
-
-    } else if transfer.get_transfer_complete_flag() {
-        transfer.clear_transfer_complete_interrupt();
-        (HALF_DMA_BUFFER_LENGTH, 0)
-
-    } else {
-        // TODO handle error flags once HAL supports them
         return;
     };
 

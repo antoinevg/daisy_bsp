@@ -7,8 +7,9 @@ use cortex_m_rt::entry;
 use cortex_m::asm;
 
 use daisy_bsp as daisy;
-use daisy::hal;
+use daisy::audio;
 
+use daisy::hal;
 use hal::prelude::*;
 use hal::rcc;
 use hal::gpio;
@@ -47,10 +48,15 @@ fn main() -> ! {
 
     // - start audio interface ------------------------------------------------
 
-    let mut audio_interface = daisy::audio::Interface::init(&ccdr.clocks,
-                                                            sai1_rec,
-                                                            ak4556_pins,
-                                                            ccdr.peripheral.DMA1).unwrap();
+    #[cfg(not(feature = "audio_hal"))]
+    let mut audio_interface = audio::Interface::init(&ccdr.clocks,
+                                                     sai1_rec,
+                                                     ak4556_pins).unwrap();
+    #[cfg(feature = "audio_hal")]
+    let mut audio_interface = audio::Interface::init(&ccdr.clocks,
+                                                     sai1_rec,
+                                                     ak4556_pins,
+                                                     ccdr.peripheral.DMA1).unwrap();
 
     let _audio_interface = audio_interface.start(|_fs, block| {
         for frame in block {

@@ -4,7 +4,7 @@
 use panic_semihosting as _;
 use cortex_m_rt::entry;
 
-use stm32h7xx_hal::pac;
+use daisy_bsp::hal::pac;
 
 
 #[entry]

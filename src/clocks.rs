@@ -6,7 +6,10 @@ use hal::rcc;
 use hal::time::Hertz;
 use hal::time::MegaHertz;
 
+#[cfg(not(feature = "audio_hal"))]
 use crate::audio;
+#[cfg(feature = "audio_hal")]
+use crate::audio_hal as audio;
 
 
 // - constants ----------------------------------------------------------------

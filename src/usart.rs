@@ -1,4 +1,8 @@
-use stm32h7xx_hal as hal;
+#[cfg(not(feature = "audio_hal"))]
+pub use stm32h7xx_hal as hal;
+#[cfg(feature = "audio_hal")]
+pub use stm32h7xx_hal_dma as hal;
+
 use hal::prelude::*;
 use hal::rcc;
 use hal::gpio;
