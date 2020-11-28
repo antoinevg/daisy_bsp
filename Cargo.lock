@@ -113,7 +113,7 @@ checksum = "7313c0d620d0cb4dbd9d019e461a4beb501071ff46ec0ab933efb4daa76d73e3"
 
 [[package]]
 name = "daisy_bsp"
-version = "0.0.2"
+version = "0.1.0"
 dependencies = [
  "cortex-m",
  "cortex-m-rt",
