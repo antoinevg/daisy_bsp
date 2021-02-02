@@ -39,7 +39,7 @@ pub struct Pins {
     pub SEED_27: gpio::gpiog::PG9 <gpio::Analog>,  // PIN_34, SAI2 SD FS
     pub SEED_28: gpio::gpioa::PA2 <gpio::Analog>,  // PIN_35, SAI2 SCK, ADC 11
     //pub SEED_29: gpio::gpiob::PB14<gpio::Analog>,  // PIN_36, USB D-, USART1 Tx
-    //pub SEED_30: gpio::gpiob::PB15<gpio::Analog>,  // PIN_36, USB D+, USART1 Rx
+    //pub SEED_30: gpio::gpiob::PB15<gpio::Analog>,  // PIN_37, USB D+, USART1 Rx
 
     // board
     //pub AK4556_PDN:  gpio::gpiob::PB11<gpio::Output<gpio::PushPull>>,
