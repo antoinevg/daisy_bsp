@@ -51,9 +51,10 @@ impl SeedCrystal for rcc::Rcc {
 /// ```
 pub fn configure(pwr: pwr::Pwr, rcc: rcc::Rcc, syscfg: &pac::SYSCFG) -> rcc::Ccdr {
     let pwrcfg = pwr.vos0(syscfg).freeze();
-    rcc.use_seed_crystal()
+    rcc.use_seed_crystal()                               // high speed external crystal @ 16 MHz
        .pll1_strategy(rcc::PllConfigStrategy::Iterative) // pll1 drives system clock
        .sys_ck(480.mhz())                                // system clock @ 480 MHz
-       .pll3_p_ck(PLL3_P)
+       .pll3_p_ck(PLL3_P)                                // audio clock  @ 12.288 MHz
+       .per_ck(4.mhz())                                  // peripheral clock @ 4 MHz
        .freeze(pwrcfg, syscfg)
 }
