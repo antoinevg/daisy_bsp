@@ -138,3 +138,11 @@ required-features = ["seed", "uses_num"]
 [[example]]
 name = "serial"
 required-features = ["seed"]
+
+[[example]]
+name = "adc_hal"
+required-features = ["seed"]
+
+[[example]]
+name = "adc_bsp"
+required-features = ["seed"]

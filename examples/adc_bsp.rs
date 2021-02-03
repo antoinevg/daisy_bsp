@@ -1,12 +1,14 @@
-//! Example of how to access the ADC peripheral directly via
-//! stm32h7xx-hal without using the board support crate.
+//! Example of how to directly access the ADC peripheral on the Daisy
+//! Seed when using the Board Support Crate.
 
 #![no_main]
 #![no_std]
 
 use panic_semihosting as _;
-
 use cortex_m_rt::entry;
+
+use daisy_bsp as daisy;
+
 use cortex_m::asm;
 
 use daisy_bsp::hal;
@@ -22,35 +24,30 @@ use hal::{pac, prelude::*};
 
 #[entry]
 fn main() -> ! {
-    let cp = cortex_m::Peripherals::take().unwrap();
-    let dp = pac::Peripherals::take().unwrap();
+    // - board setup ----------------------------------------------------------
 
-    // - power & clocks -------------------------------------------------------
+    let mut board = daisy::Board::take().unwrap();
 
-    let pwr = dp.PWR.constrain();
-    let pwrcfg = pwr.vos0(&dp.SYSCFG).freeze();
-    let mut ccdr = dp.RCC.constrain()
-        .use_hse(16.mhz())                                     // external crystal @ 16 MHz
-        .pll1_strategy(PllConfigStrategy::Iterative)           // pll1 drives system clock
-        .sys_ck(480.mhz())                                     // system clock @ 480 MHz
-        .per_ck(4.mhz())                                       // adc1 clock @ 4 MHz
-        .freeze(pwrcfg, &dp.SYSCFG);
+    // - clocks ---------------------------------------------------------------
 
     // switch adc_ker_ck_input multiplexer to per_ck
-    ccdr.peripheral.kernel_adc_clk_mux(AdcClkSel::PER);
+    board.peripheral.kernel_adc_clk_mux(AdcClkSel::PER);
 
     // - adc ------------------------------------------------------------------
 
-    let mut delay = Delay::new(cp.SYST, ccdr.clocks);
+    let cp = unsafe { cortex_m::Peripherals::steal() };
+    let dp = unsafe { pac::Peripherals::steal() };
+
+    let mut delay = Delay::new(cp.SYST, board.clocks);
     let mut adc1 = adc::Adc::adc1(
         dp.ADC1,
         &mut delay,
-        ccdr.peripheral.ADC12,
-        &ccdr.clocks,
+        board.peripheral.ADC12,
+        &board.clocks,
     ).enable();
     adc1.set_resolution(adc::Resolution::SIXTEENBIT);
 
-    let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
+    let gpioc = dp.GPIOC.split(board.peripheral.GPIOC);
     let mut adc1_channel_4  = gpioc.pc4.into_analog(); // pot 1
     let mut adc1_channel_10 = gpioc.pc0.into_analog(); // pot 2
 
