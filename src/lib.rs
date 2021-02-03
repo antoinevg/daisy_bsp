@@ -42,6 +42,11 @@ pub mod led;
 pub mod pin;
 pub mod usart;
 
+// TODO proper logging with compile-time feature selection of: semihosting/itm/rtt
+//pub mod itm;
+//#[macro_use]
+//pub mod itm_macros;
+
 #[cfg(not(feature = "audio_hal"))]
 pub mod audio;
 #[cfg(feature = "audio_hal")]
@@ -49,12 +54,24 @@ pub mod audio_hal;
 #[cfg(feature = "audio_hal")]
 pub use crate::audio_hal as audio;
 
+// - global static state ------------------------------------------------------
+
+// `no_mangle` is used here to prevent linking different minor
+// versions of this crate as that would let you `take` the core
+// peripherals more than once (one per minor version)
+#[no_mangle]
+static DAISY_BOARD: () = ();
+
+/// Set to `true` when `take` was called to make `Board` a singleton.
+static mut TAKEN: bool = false;
+
 
 // - Board --------------------------------------------------------------------
 
 #[allow(non_snake_case)]
 pub struct Board<'a> {
     pub clocks: hal::rcc::CoreClocks,
+    pub peripheral: hal::rcc::rec::PeripheralREC,
     pub pins: pin::Pins,
     pub leds: led::Leds,
 
@@ -63,16 +80,6 @@ pub struct Board<'a> {
 
     _marker: core::marker::PhantomData<&'a *const ()>,
 }
-
-
-// NOTE `no_mangle` is used here to prevent linking different minor versions of this crate as that
-// would let you `take` the core peripherals more than once (one per minor version)
-#[no_mangle]
-static DAISY_BOARD: () = ();
-
-/// Set to `true` when `take` or `steal` was called to make `Board` a singleton.
-static mut TAKEN: bool = false;
-
 
 impl<'a> Board<'a> {
     /// Returns the daisy board *once*
@@ -89,16 +96,13 @@ impl<'a> Board<'a> {
         })
     }
 
-    /// Unchecked version of `Board::take`
-    #[inline]
-    pub unsafe fn steal() -> Self {
-        Self::new(pac::CorePeripherals::steal(),
-                  pac::Peripherals::steal())
-    }
-
     fn new(_cp: pac::CorePeripherals, dp: pac::Peripherals) -> Board<'a> {
+
+        let rcc = dp.RCC.constrain();
+        let ccdr_peripheral = unsafe { rcc.steal_peripheral_rec() };
+
         let ccdr: hal::rcc::Ccdr = clocks::configure(dp.PWR.constrain(),
-                                                     dp.RCC.constrain(),
+                                                     rcc,
                                                      &dp.SYSCFG);
 
         let sai1_rec: hal::rcc::rec::Sai1 = ccdr.peripheral.SAI1.kernel_clk_mux(hal::rcc::rec::Sai1ClkSel::PLL3_P);
@@ -139,6 +143,7 @@ impl<'a> Board<'a> {
 
         Self {
             clocks: ccdr.clocks,
+            peripheral: ccdr_peripheral,
             leds: led::Leds {
                 USER: led::LedUser::new(gpioc.pc7)
             },
