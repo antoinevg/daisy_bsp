@@ -12,7 +12,6 @@ use daisy_bsp as daisy;
 use cortex_m::asm;
 
 use daisy_bsp::hal;
-use hal::rcc::PllConfigStrategy;
 use hal::rcc::rec::AdcClkSel;
 use hal::{adc, delay::Delay};
 
@@ -59,7 +58,7 @@ fn main() -> ! {
 
     loop {
         let pot_1: u32 = adc1.read(&mut adc1_channel_4).unwrap();
-        let pot_2: u32 = adc1.read(&mut adc1_channel_10).unwrap();
+        let _pot_2: u32 = adc1.read(&mut adc1_channel_10).unwrap();
 
         let ticks = (pot_1 as f32 * (480_000_000. / 65_535.)) as u32;
 
