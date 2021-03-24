@@ -6,6 +6,7 @@ use cortex_m_rt::entry;
 use cortex_m::asm;
 
 use daisy_bsp as daisy;
+use daisy::hal::prelude::*;
 use daisy::led::Led;
 
 mod dsp;
@@ -18,9 +19,30 @@ fn main() -> ! {
     // - board setup ----------------------------------------------------------
 
     let board = daisy::Board::take().unwrap();
+    let dp = daisy::pac::Peripherals::take().unwrap();
 
-    let mut led_user = board.leds.USER;
-    let mut audio_interface = board.SAI1;
+    let ccdr = board.freeze_clocks(dp.PWR.constrain(),
+                                   dp.RCC.constrain(),
+                                   &dp.SYSCFG);
+
+    let pins = board.split_gpios(dp.GPIOA.split(ccdr.peripheral.GPIOA),
+                                 dp.GPIOB.split(ccdr.peripheral.GPIOB),
+                                 dp.GPIOC.split(ccdr.peripheral.GPIOC),
+                                 dp.GPIOD.split(ccdr.peripheral.GPIOD),
+                                 dp.GPIOE.split(ccdr.peripheral.GPIOE),
+                                 dp.GPIOF.split(ccdr.peripheral.GPIOF),
+                                 dp.GPIOG.split(ccdr.peripheral.GPIOG),
+                                 dp.GPIOH.split(ccdr.peripheral.GPIOH),
+                                 dp.GPIOI.split(ccdr.peripheral.GPIOI),
+                                 dp.GPIOJ.split(ccdr.peripheral.GPIOJ),
+                                 dp.GPIOK.split(ccdr.peripheral.GPIOK));
+
+    let mut led_user = daisy::led::LedUser::new(pins.LED_USER);
+
+    let mut audio_interface = board.split_audio(&ccdr.clocks,
+                                                ccdr.peripheral.SAI1,
+                                                ccdr.peripheral.DMA1,
+                                                pins.AK4556);
 
 
     // - audio callback -------------------------------------------------------
@@ -42,7 +64,7 @@ fn main() -> ! {
 
     // - main loop ------------------------------------------------------------
 
-    let one_second = board.clocks.sys_ck().0;
+    let one_second = ccdr.clocks.sys_ck().0;
 
     loop {
         led_user.on();

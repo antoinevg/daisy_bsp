@@ -60,11 +60,13 @@ fn main() -> ! {
 
     // - main loop ------------------------------------------------------------
 
+    let scale_factor = ccdr.clocks.sys_ck().0 as f32 / 65_535.;
+
     loop {
         let pot_1: u32 = adc1.read(&mut adc1_channel_4).unwrap();
         let _pot_2: u32 = adc1.read(&mut adc1_channel_10).unwrap();
 
-        let ticks = (pot_1 as f32 * (480_000_000. / 65_535.)) as u32;
+        let ticks = (pot_1 as f32 * scale_factor) as u32;
 
         led_user.set_high().unwrap();
         asm::delay(ticks);

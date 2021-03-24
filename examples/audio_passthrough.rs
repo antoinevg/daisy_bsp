@@ -22,10 +22,10 @@ use hal::hal::digital::v2::OutputPin;
 fn main() -> ! {
     // - power & clocks -------------------------------------------------------
 
-    let dp: hal::pac::Peripherals = hal::pac::Peripherals::take().unwrap(); // device-specific peripherals
-    let ccdr: hal::rcc::Ccdr = daisy::configure_clocks(dp.PWR.constrain(),
-                                                       dp.RCC.constrain(),
-                                                       &dp.SYSCFG);
+    let dp: hal::pac::Peripherals = hal::pac::Peripherals::take().unwrap();
+    let ccdr: hal::rcc::Ccdr = daisy::clocks::configure(dp.PWR.constrain(),
+                                                        dp.RCC.constrain(),
+                                                        &dp.SYSCFG);
     let sai1_rec = ccdr.peripheral.SAI1.kernel_clk_mux(rcc::rec::Sai1ClkSel::PLL3_P);
 
 
