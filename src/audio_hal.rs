@@ -27,7 +27,7 @@ pub const FS: time::Hertz = time::Hertz(48_000);
 pub type Frame = (f32, f32);
 pub type Block = [Frame; BLOCK_LENGTH];
 
-type Sai1Pins = (
+pub type Sai1Pins = (
     gpio::gpiob::PB11<gpio::Output<gpio::PushPull>>,  // PDN
     gpio::gpioe::PE2<gpio::Alternate<gpio::AF6>>,     // MCLK_A
     gpio::gpioe::PE5<gpio::Alternate<gpio::AF6>>,     // SCK_A
