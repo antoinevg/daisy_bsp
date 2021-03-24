@@ -34,13 +34,8 @@ pub mod board;
 pub use board::Board;
 pub mod clocks;
 pub mod led;
-pub mod pins;
 pub mod midi;
-
-// TODO proper logging with compile-time feature selection of: semihosting/itm/rtt
-//pub mod itm;
-//#[macro_use]
-//pub mod itm_macros;
+pub mod pins;
 
 #[cfg(not(feature = "audio_hal"))]
 pub mod audio;
@@ -48,3 +43,6 @@ pub mod audio;
 pub mod audio_hal;
 #[cfg(feature = "audio_hal")]
 pub use crate::audio_hal as audio;
+
+#[cfg(any(feature = "log-itm"))]
+pub mod itm;

@@ -51,10 +51,36 @@ impl SeedCrystal for rcc::Rcc {
 /// ```
 pub fn configure(pwr: pwr::Pwr, rcc: rcc::Rcc, syscfg: &pac::SYSCFG) -> rcc::Ccdr {
     let pwrcfg = pwr.vos0(syscfg).freeze();
-    rcc.use_seed_crystal()                               // high speed external crystal @ 16 MHz
-       .pll1_strategy(rcc::PllConfigStrategy::Iterative) // pll1 drives system clock
-       .sys_ck(480.mhz())                                // system clock @ 480 MHz
-       .pll3_p_ck(PLL3_P)                                // audio clock  @ 12.288 MHz
-       .per_ck(4.mhz())                                  // peripheral clock @ 4 MHz
-       .freeze(pwrcfg, syscfg)
+
+    #[cfg(not(feature = "log-itm"))]
+    let ccdr = rcc.use_seed_crystal()                     // high speed external crystal @ 16 MHz
+        .pll1_strategy(rcc::PllConfigStrategy::Iterative) // pll1 drives system clock
+        .sys_ck(480.mhz())                                // system clock @ 480 MHz
+        .pll3_p_ck(PLL3_P)                                // audio clock  @ 12.288 MHz
+        .per_ck(4.mhz())                                  // peripheral clock @ 4 MHz
+        .freeze(pwrcfg, syscfg);
+
+    #[cfg(any(feature = "log-itm"))]
+    let ccdr = rcc.use_seed_crystal()                     // high speed external crystal @ 16 MHz
+        .pll1_strategy(rcc::PllConfigStrategy::Iterative) // pll1 drives system clock
+        .sys_ck(480.mhz())                                // system clock @ 480 MHz
+        .pll1_r_ck(480.mhz())                             // for TRACECK
+        .pll3_p_ck(PLL3_P)                                // audio clock  @ 12.288 MHz
+        .per_ck(4.mhz())                                  // peripheral clock @ 4 MHz
+        .freeze(pwrcfg, syscfg);
+
+    // enable itm support
+    #[cfg(any(feature = "log-itm"))]
+    unsafe {
+        let swo_frequency = 2_000_000;
+        let mut cp = cortex_m::Peripherals::steal();
+        let dp = pac::Peripherals::steal();
+        crate::itm::enable_itm(&mut cp.DCB,
+                               &dp.DBGMCU,
+                               &mut cp.ITM,
+                               ccdr.clocks.c_ck().0,
+                               swo_frequency);
+    }
+
+    ccdr
 }
