@@ -39,7 +39,7 @@ pub use board::Board;
 pub mod clocks;
 pub mod led;
 pub mod pins;
-pub mod usart;
+pub mod midi;
 
 // TODO proper logging with compile-time feature selection of: semihosting/itm/rtt
 //pub mod itm;

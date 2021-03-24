@@ -15,7 +15,7 @@ use crate::audio;
 use crate::clocks;
 use crate::led;
 use crate::pins::*;
-use crate::usart;
+use crate::midi;
 
 
 // - global static state ------------------------------------------------------
@@ -124,11 +124,15 @@ impl Board {
         }
     }
 
-    pub fn split_sai1(&self,
-                      clocks: &hal::rcc::CoreClocks,
-                      sai1_prec: hal::rcc::rec::Sai1,
-                      #[allow(unused_variables)] dma1_prec: hal::rcc::rec::Dma1,
-                      pins: AK4556Pins) -> audio::Interface {
+    pub fn split_led_user(&self, pin: LedUserPin) -> led::LedUser {
+        led::LedUser::new(pin)
+    }
+
+    pub fn split_audio(&self,
+                       clocks: &hal::rcc::CoreClocks,
+                       sai1_prec: hal::rcc::rec::Sai1,
+                       #[allow(unused_variables)] dma1_prec: hal::rcc::rec::Dma1,
+                       pins: AK4556Pins) -> audio::Interface {
 
         let pins = (pins.PDN.into_push_pull_output(),
                     pins.MCLK_A.into_alternate_af6(),
@@ -152,22 +156,18 @@ impl Board {
         sai1_interface
     }
 
-    pub fn split_led_user(&self, pin: LedUserPin) -> led::LedUser {
-        led::LedUser::new(pin)
-    }
-
-    pub fn split_usart1(&self,
-                        clocks: &hal::rcc::CoreClocks,
-                        usart1_prec: hal::rcc::rec::Usart1,
-                        pins: (SeedPin29, SeedPin30)) -> usart::Interface {
+    pub fn split_midi(&self,
+                      clocks: &hal::rcc::CoreClocks,
+                      usart1_prec: hal::rcc::rec::Usart1,
+                      pins: (SeedPin29, SeedPin30)) -> midi::Interface {
         let pins = (
             pins.0.into_alternate_af4(),  // USART1 TX - GPIO29 - Pin 36 <= GPIOB 14
             pins.1.into_alternate_af4(),  // USART1 RX - GPIO30 - Pin 37 => GPIOB 15
         );
-        let usart1_interface = usart::Interface::init(clocks,
-                                                      usart1_prec,
-                                                      pins).unwrap();
-        usart1_interface
+        let midi_interface = midi::Interface::init(clocks,
+                                                   usart1_prec,
+                                                   pins).unwrap();
+        midi_interface
     }
 }
 
