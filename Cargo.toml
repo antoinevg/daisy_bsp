@@ -108,15 +108,15 @@ opt-level = "s" #  optimize for binary size
 # - examples ------------------------------------------------------------------
 
 [[example]]
+name = "blinky"
+required-features = ["seed"]
+
+[[example]]
 name = "blinky_pac"
 required-features = ["seed"]
 
 [[example]]
 name = "blinky_hal"
-required-features = ["seed"]
-
-[[example]]
-name = "blinky_bsp"
 required-features = ["seed"]
 
 [[example]]
