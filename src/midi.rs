@@ -5,8 +5,6 @@ pub use stm32h7xx_hal_dma as hal;
 
 use hal::prelude::*;
 use hal::rcc;
-use hal::gpio;
-
 use hal::pac;
 use pac::interrupt;
 
@@ -14,11 +12,6 @@ use alloc::prelude::v1::Box;
 
 
 // - types --------------------------------------------------------------------
-
-type Usart1Pins = (
-    gpio::gpiob::PB14<gpio::Alternate<hal::gpio::AF4>>,  // tx
-    gpio::gpiob::PB15<gpio::Alternate<hal::gpio::AF4>>,  // rx
-);
 
 #[repr(C)] pub struct OpaqueInterface { _private: [u8; 0] }
 
@@ -38,7 +31,9 @@ pub struct Interface<'a> {
 
 
 impl<'a> Interface<'a> {
-    pub fn init(clocks: &rcc::CoreClocks, rec_usart1: rcc::rec::Usart1, pins: Usart1Pins) -> Result<Interface<'a>, Error> {
+    pub fn init(clocks: &rcc::CoreClocks,
+                rec_usart1: rcc::rec::Usart1,
+                pins: impl hal::serial::Pins<pac::USART1>) -> Result<Interface<'a>, Error> {
         let usart1 = unsafe { pac::Peripherals::steal().USART1 };
 
         let serial = usart1.serial(pins, 31_250.bps(), rec_usart1, clocks);

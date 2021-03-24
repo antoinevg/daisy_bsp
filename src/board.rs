@@ -159,10 +159,10 @@ impl Board {
     pub fn split_midi(&self,
                       clocks: &hal::rcc::CoreClocks,
                       usart1_prec: hal::rcc::rec::Usart1,
-                      pins: (SeedPin29, SeedPin30)) -> midi::Interface {
+                      pins: (SeedPin13, SeedPin14)) -> midi::Interface {
         let pins = (
-            pins.0.into_alternate_af4(),  // USART1 TX - GPIO29 - Pin 36 <= GPIOB 14
-            pins.1.into_alternate_af4(),  // USART1 RX - GPIO30 - Pin 37 => GPIOB 15
+            pins.0.into_alternate_af7(),  // USART1 TX
+            pins.1.into_alternate_af7(),  // USART1 RX
         );
         let midi_interface = midi::Interface::init(clocks,
                                                    usart1_prec,
@@ -213,10 +213,10 @@ macro_rules! board_split_gpios {
 macro_rules! board_split_audio {
     ($board:expr, $ccdr:expr, $pins:expr) => {
         {
-            $board.split_sai1(&$ccdr.clocks,
-                              $ccdr.peripheral.SAI1,
-                              $ccdr.peripheral.DMA1,
-                              $pins.AK4556)
+            $board.split_audio(&$ccdr.clocks,
+                               $ccdr.peripheral.SAI1,
+                               $ccdr.peripheral.DMA1,
+                               $pins.AK4556)
         }
     }
 }
@@ -226,9 +226,9 @@ macro_rules! board_split_audio {
 macro_rules! board_split_midi {
     ($board:expr, $ccdr:expr, $pins:expr) => {
         {
-            $board.split_usart1(&$ccdr.clocks,
-                                $ccdr.peripheral.USART1,
-                                ($pins.SEED_PIN_29, $pins.SEED_PIN_30))
+            $board.split_midi(&$ccdr.clocks,
+                              $ccdr.peripheral.USART1,
+                              ($pins.SEED_PIN_13, $pins.SEED_PIN_14))
         }
     }
 }
