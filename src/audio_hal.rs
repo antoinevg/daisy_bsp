@@ -1,4 +1,4 @@
-use stm32h7xx_hal_dma as hal;
+use stm32h7xx_hal as hal;
 use hal::gpio;
 use hal::time;
 use hal::dma;
@@ -39,12 +39,14 @@ pub type Sai1Pins = (
 type TransferDma1Str0 = dma::Transfer<dma::dma::Stream0<pac::DMA1>,
                                       pac::SAI1,
                                       dma::MemoryToPeripheral,
-                                      &'static mut [u32; DMA_BUFFER_LENGTH]>;
+                                      &'static mut [u32; DMA_BUFFER_LENGTH],
+                                      dma::DBTransfer>;
 
 type TransferDma1Str1 = dma::Transfer<dma::dma::Stream1<pac::DMA1>,
                                       pac::SAI1,
                                       dma::PeripheralToMemory,
-                                      &'static mut [u32; DMA_BUFFER_LENGTH]>;
+                                      &'static mut [u32; DMA_BUFFER_LENGTH],
+                                      dma::DBTransfer>;
 
 #[repr(C)]
 pub struct OpaqueInterface { _private: [u8; 0] }
@@ -106,7 +108,7 @@ impl<'a> Interface<'a>
             .peripheral_increment(false)
             .circular_buffer(true)
             .fifo_enable(false);
-        let dma1_str0: dma::Transfer<_, _, dma::MemoryToPeripheral, _> = dma::Transfer::init(
+        let dma1_str0: dma::Transfer<_, _, dma::MemoryToPeripheral, _, _> = dma::Transfer::init(
             dma1_streams.0,
             unsafe { pac::Peripherals::steal().SAI1 },
             tx_buffer,
@@ -118,7 +120,7 @@ impl<'a> Interface<'a>
         let rx_buffer: &'static mut [u32; DMA_BUFFER_LENGTH] = unsafe { &mut RX_BUFFER };
         let dma_config = dma_config.transfer_complete_interrupt(true)
                                    .half_transfer_interrupt(true);
-        let dma1_str1: dma::Transfer<_, _, dma::PeripheralToMemory, _> = dma::Transfer::init(
+        let dma1_str1: dma::Transfer<_, _, dma::PeripheralToMemory, _, _> = dma::Transfer::init(
             dma1_streams.1,
             unsafe { pac::Peripherals::steal().SAI1 },
             rx_buffer,

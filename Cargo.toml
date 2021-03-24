@@ -30,25 +30,10 @@ targets = ["thumbv7em-none-eabihf"]
 [dependencies]
 cortex-m = "0.6.4"
 cortex-m-rt = { version = "0.6.13", features = ["device"] }
+stm32h7xx-hal = { version = "0.9.0", features = [ "stm32h750v", "rt", "revision_v" ] }
 static-alloc = "0.2.1"
 without-alloc = "0.2.1"
 cty = "0.2.1"
-
-
-# - select version of stm32h7xx-hal to use
-
-[dependencies.stm32h7xx-hal]
-package = "stm32h7xx-hal"
-features = [ "stm32h750v", "rt", "revision_v" ]
-version = "0.8.0"
-optional = true
-
-[dependencies.stm32h7xx-hal-dma]
-package = "stm32h7xx-hal"
-features = [ "stm32h750v", "rt", "revision_v" ]
-git = "https://github.com/stm32-rs/stm32h7xx-hal.git"
-rev = "0bfeeca4ce120c1b7c6d140a7da73a4372b874d8"
-optional = true
 
 
 # - optional dependencies used by examples
@@ -80,14 +65,13 @@ cortex-m-semihosting = { version = "0.3.5" }
 # - features ------------------------------------------------------------------
 
 [features]
-default = [ "seed", "audio_pac" ]
+default = [ "seed" ]
 seed = []
 pod = []
 petal = []
 patch = []
 field = []
-audio_pac = [ "stm32h7xx-hal" ]
-audio_hal = [ "stm32h7xx-hal-dma" ]
+audio_hal = []
 uses_num = [ "num", "num-derive", "num-traits" ]
 
 

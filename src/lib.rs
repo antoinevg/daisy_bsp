@@ -8,11 +8,7 @@
 #![deny(warnings)]
 #![no_std]
 
-#[cfg(not(feature = "audio_hal"))]
 pub use stm32h7xx_hal as hal;
-#[cfg(feature = "audio_hal")]
-pub use stm32h7xx_hal_dma as hal;
-
 pub use hal::hal as embedded_hal;
 pub use hal::pac;
 

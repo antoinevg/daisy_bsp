@@ -1,8 +1,4 @@
-#[cfg(not(feature = "audio_hal"))]
 pub use stm32h7xx_hal as hal;
-#[cfg(feature = "audio_hal")]
-pub use stm32h7xx_hal_dma as hal;
-
 use hal::hal as embedded_hal;
 
 use hal::gpio;
