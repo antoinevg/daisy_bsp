@@ -30,7 +30,7 @@ targets = ["thumbv7em-none-eabihf"]
 [dependencies]
 cortex-m = "^0.7.1"
 cortex-m-rt = { version = "^0.6.12", features = ["device"] }
-stm32h7xx-hal = { version = "0.9.0", features = [ "stm32h750v", "rt", "revision_v" ] }
+stm32h7xx-hal = { version = "0.9.0", features = [ "stm32h750v", "rt", "revision_v", "usb_hs" ] }
 static-alloc = "0.2.2"
 without-alloc = "0.2.1"
 cty = "0.2.1"
