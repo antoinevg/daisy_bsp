@@ -1,15 +1,4 @@
-/*#![allow(dead_code)]
-#![allow(non_snake_case)]
-#![allow(unused_imports)]
-#![allow(unused_unsafe)]
-#![allow(unused_variables)]
-*/
-
 use stm32h7xx_hal as hal;
-//use hal::prelude::*;
-
-//use hal::pac;
-//use hal::hal as embedded_hal;
 
 use crate::audio;
 use crate::clocks;
@@ -28,8 +17,6 @@ static DAISY_BOARD: () = ();
 
 /// Set to `true` when `take` was called to make `Board` a singleton.
 static mut TAKEN: bool = false;
-
-
 
 
 // - Board --------------------------------------------------------------------
