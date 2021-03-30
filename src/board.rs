@@ -56,11 +56,7 @@ impl Board {
                        gpiod: hal::gpio::gpiod::Parts,
                        gpioe: hal::gpio::gpioe::Parts,
                        _gpiof: hal::gpio::gpiof::Parts,
-                       gpiog: hal::gpio::gpiog::Parts,
-                       _gpioh: hal::gpio::gpioh::Parts,
-                       _gpioi: hal::gpio::gpioi::Parts,
-                       _gpioj: hal::gpio::gpioj::Parts,
-                       _gpiok: hal::gpio::gpiok::Parts) -> Pins {
+                       gpiog: hal::gpio::gpiog::Parts) -> Pins {
         Pins {
             SEED_PIN_0: gpiob.pb12,
             SEED_PIN_1: gpioc.pc11,
@@ -186,11 +182,7 @@ macro_rules! board_split_gpios {
                                $dp.GPIOD.split($ccdr.peripheral.GPIOD),
                                $dp.GPIOE.split($ccdr.peripheral.GPIOE),
                                $dp.GPIOF.split($ccdr.peripheral.GPIOF),
-                               $dp.GPIOG.split($ccdr.peripheral.GPIOG),
-                               $dp.GPIOH.split($ccdr.peripheral.GPIOH),
-                               $dp.GPIOI.split($ccdr.peripheral.GPIOI),
-                               $dp.GPIOJ.split($ccdr.peripheral.GPIOJ),
-                               $dp.GPIOK.split($ccdr.peripheral.GPIOK))
+                               $dp.GPIOG.split($ccdr.peripheral.GPIOG))
         }
     }
 }
