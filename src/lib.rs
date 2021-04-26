@@ -30,19 +30,13 @@ fn on_oom(_layout: core::alloc::Layout) -> ! {
 
 // - modules ------------------------------------------------------------------
 
+pub mod audio;
 pub mod board;
-pub use board::Board;
 pub mod clocks;
+#[cfg(any(feature = "log-itm"))]
+pub mod itm;
 pub mod led;
 pub mod midi;
 pub mod pins;
 
-#[cfg(not(feature = "audio_hal"))]
-pub mod audio;
-#[cfg(feature = "audio_hal")]
-pub mod audio_hal;
-#[cfg(feature = "audio_hal")]
-pub use crate::audio_hal as audio;
-
-#[cfg(any(feature = "log-itm"))]
-pub mod itm;
+pub use board::Board;

@@ -73,7 +73,6 @@ pod = []
 petal = []
 patch = []
 field = []
-audio_hal = []
 log-itm = []
 uses_num = [ "num", "num-derive", "num-traits" ]
 

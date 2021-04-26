@@ -124,14 +124,8 @@ impl Board {
                     pins.SD_A.into_alternate_af6(),
                     pins.SD_B.into_alternate_af6());
 
-
         let sai1_prec: hal::rcc::rec::Sai1 = sai1_prec.kernel_clk_mux(hal::rcc::rec::Sai1ClkSel::PLL3_P);
 
-        #[cfg(not(feature = "audio_hal"))]
-        let sai1_interface = audio::Interface::init(clocks,
-                                                    sai1_prec,
-                                                    pins).unwrap();
-        #[cfg(feature = "audio_hal")]
         let sai1_interface = audio::Interface::init(clocks,
                                                     sai1_prec,
                                                     pins,

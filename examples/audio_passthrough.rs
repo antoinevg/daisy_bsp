@@ -48,11 +48,6 @@ fn main() -> ! {
 
     // - start audio interface ------------------------------------------------
 
-    #[cfg(not(feature = "audio_hal"))]
-    let mut audio_interface = audio::Interface::init(&ccdr.clocks,
-                                                     sai1_rec,
-                                                     ak4556_pins).unwrap();
-    #[cfg(feature = "audio_hal")]
     let mut audio_interface = audio::Interface::init(&ccdr.clocks,
                                                      sai1_rec,
                                                      ak4556_pins,
