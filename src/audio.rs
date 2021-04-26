@@ -1,3 +1,6 @@
+#[cfg(any(feature = "alloc"))] extern crate alloc;
+#[cfg(any(feature = "alloc"))] use alloc::prelude::v1::Box;
+
 use stm32h7xx_hal as hal;
 use hal::gpio;
 use hal::time;
@@ -9,8 +12,6 @@ use embedded_hal::digital::v2::OutputPin;
 
 use hal::pac;
 use pac::interrupt;
-
-use alloc::prelude::v1::Box;
 
 
 // = global constants =========================================================

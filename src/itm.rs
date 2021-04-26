@@ -1,15 +1,3 @@
-#![allow(unused_macros)]
-
-
-#[macro_export]
-macro_rules! log_itm {
-    ($($arg:tt)*) => (
-        let itm = unsafe { &mut *cortex_m::peripheral::ITM::ptr() };
-        cortex_m::iprintln!(&mut itm.stim[0], $($arg)*);
-    )
-}
-
-
 /// Adapted from: https://gist.github.com/diondokter/5740aeb145e123c5b4dac7c7b32e36f6
 ///
 /// Register addresses:

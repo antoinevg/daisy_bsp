@@ -1,10 +1,11 @@
+#[cfg(any(feature = "alloc"))] extern crate alloc;
+#[cfg(any(feature = "alloc"))] use alloc::prelude::v1::Box;
+
 pub use stm32h7xx_hal as hal;
 use hal::prelude::*;
 use hal::rcc;
 use hal::pac;
 use pac::interrupt;
-
-use alloc::prelude::v1::Box;
 
 
 // - types --------------------------------------------------------------------

@@ -31,10 +31,17 @@ targets = ["thumbv7em-none-eabihf"]
 cortex-m = "^0.7.1"
 cortex-m-rt = { version = "^0.6.12", features = ["device"] }
 stm32h7xx-hal = { version = "0.9.0", features = [ "stm32h750v", "rt", "revision_v", "usb_hs" ] }
-static-alloc = "0.2.2"
-without-alloc = "0.2.1"
 cty = "0.2.1"
 
+# - optional dependencies used by features
+
+[dependencies.static-alloc]
+version = "0.2.2"
+optional = true
+
+[dependencies.without-alloc]
+version = "0.2.1"
+optional = true
 
 # - optional dependencies used by examples
 
@@ -68,6 +75,7 @@ cortex-m-semihosting = { version = "0.3.5" }
 
 [features]
 default = [ "seed" ]
+alloc = [ "static-alloc", "without-alloc"  ] # requires rust nightly
 seed = []
 pod = []
 petal = []
