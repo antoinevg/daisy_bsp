@@ -17,3 +17,4 @@ RELEASE.md
 tmp/
 stm32h7x-orig.cfg
 stm32h7x-patched-itm.cfg
+rust-toolchain
