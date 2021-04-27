@@ -1,9 +1,11 @@
 #![no_main]
 #![no_std]
 
+use core::cell::RefCell;
+use cortex_m::interrupt::Mutex;
+
 use panic_semihosting as _;
 use cortex_m_rt::entry;
-
 use cortex_m::asm;
 
 use daisy_bsp as daisy;
@@ -15,8 +17,16 @@ use hal::rcc;
 use hal::gpio;
 use hal::hal::digital::v2::OutputPin;
 
+use daisy::pac;
+use pac::interrupt;
 
-// = entry ====================================================================
+
+// - static global state ------------------------------------------------------
+
+static AUDIO_INTERFACE: Mutex<RefCell<Option<audio::Interface>>> = Mutex::new(RefCell::new(None));
+
+
+// - entry point --------------------------------------------------------------
 
 #[entry]
 fn main() -> ! {
@@ -48,16 +58,36 @@ fn main() -> ! {
 
     // - start audio interface ------------------------------------------------
 
-    let mut audio_interface = audio::Interface::init(&ccdr.clocks,
-                                                     sai1_rec,
-                                                     ak4556_pins,
-                                                     ccdr.peripheral.DMA1).unwrap();
+    let audio_interface = audio::Interface::init(&ccdr.clocks,
+                                                 sai1_rec,
+                                                 ak4556_pins,
+                                                 ccdr.peripheral.DMA1).unwrap();
 
-    let _audio_interface = audio_interface.start(|_fs, block| {
+    // handle callback with function pointer
+    #[cfg(not(feature = "alloc"))]
+    let audio_interface = {
+        fn callback(_fs: f32, block: &mut audio::Block) {
+            for frame in block {
+                let (left, right) = *frame;
+                *frame = (left, right);
+            }
+        }
+
+        audio_interface.start(callback).unwrap()
+    };
+
+    // handle callback with closure (needs alloc)
+    #[cfg(any(feature = "alloc"))]
+    let audio_interface = audio_interface.start(|_fs, block| {
         for frame in block {
             let (left, right) = *frame;
             *frame = (left, right);
         }
+    }).unwrap();
+
+    // wrap audio interface in mutex so we can access it in the interrupt
+    cortex_m::interrupt::free(|cs| {
+        AUDIO_INTERFACE.borrow(cs).replace(Some(audio_interface));
     });
 
 
@@ -71,4 +101,22 @@ fn main() -> ! {
         led_user.set_low().unwrap();
         asm::delay(one_second);
     }
+}
+
+
+// - interrupts ---------------------------------------------------------------
+
+/// interrupt handler for: dma1, stream1
+#[interrupt]
+fn DMA1_STR1() {
+    cortex_m::interrupt::free(|cs| {
+        if let Some(audio_interface) = AUDIO_INTERFACE.borrow(cs).borrow_mut().as_mut() {
+            match audio_interface.handle_interrupt_dma1_str1() {
+                Ok(()) => (),
+                Err(_e) => {
+                    // handle any errors
+                }
+            };
+        }
+    });
 }

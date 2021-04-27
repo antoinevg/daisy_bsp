@@ -7,7 +7,7 @@ use cortex_m_rt::entry;
 use daisy_bsp as daisy;
 use daisy::hal::prelude::*;
 use daisy::led::Led;
-use daisy::log_itm;
+use daisy::loggit;
 
 
 #[entry]
@@ -21,7 +21,7 @@ fn main() -> ! {
                                    dp.RCC.constrain(),
                                    &dp.SYSCFG);
 
-    log_itm!("Hello daisy::itm !");
+    loggit!("Hello daisy::itm !");
 
     let pins = board.split_gpios(dp.GPIOA.split(ccdr.peripheral.GPIOA),
                                  dp.GPIOB.split(ccdr.peripheral.GPIOB),
@@ -40,7 +40,7 @@ fn main() -> ! {
     let mut counter = 0;
 
     loop {
-        log_itm!("ping: {}", counter);
+        loggit!("ping: {}", counter);
         counter += 1;
 
         led_user.on();

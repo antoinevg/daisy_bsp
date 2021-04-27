@@ -2,16 +2,31 @@
 #![no_std]
 
 use panic_semihosting as _;
+
+extern crate alloc;
+use alloc::sync::Arc;
+
+use core::cell::RefCell;
+use core::sync::atomic::{AtomicU8, Ordering};
+
+use cortex_m::interrupt::Mutex;
 use cortex_m_rt::entry;
 
 use daisy_bsp as daisy;
-use daisy::hal::prelude::*;
+use daisy::loggit;
+
+use daisy::pac;
+use pac::interrupt;
+
 
 mod dsp;
 mod instrument;
 
-use dsp::osc;
-use instrument::midi;
+
+// - static global state ------------------------------------------------------
+
+static AUDIO_INTERFACE: Mutex<RefCell<Option<daisy::audio::Interface>>> = Mutex::new(RefCell::new(None));
+static MIDI_INTERFACE: Mutex<RefCell<Option<daisy::midi::Interface>>> = Mutex::new(RefCell::new(None));
 
 
 #[entry]
@@ -19,11 +34,9 @@ fn main() -> ! {
 
     // - state ----------------------------------------------------------------
 
-    use core::sync::atomic::AtomicU8;
-    use core::sync::atomic::Ordering;
-    let midi_note = AtomicU8::new(69);
+    let midi_note = Arc::new(AtomicU8::new(69));
 
-    let mut osc: osc::Wavetable = osc::Wavetable::new(osc::Shape::Sin);
+    let mut osc: dsp::osc::Wavetable = dsp::osc::Wavetable::new(dsp::osc::Shape::Sin);
 
 
     // - board setup ----------------------------------------------------------
@@ -31,36 +44,24 @@ fn main() -> ! {
     let board = daisy::Board::take().unwrap();
     let dp = daisy::pac::Peripherals::take().unwrap();
 
-    let ccdr = board.freeze_clocks(dp.PWR.constrain(),
-                                   dp.RCC.constrain(),
-                                   &dp.SYSCFG);
+    let ccdr = daisy::board_freeze_clocks!(board, dp);
+    let pins = daisy::board_split_gpios!(board, ccdr, dp);
+    let audio_interface = daisy::board_split_audio!(ccdr, pins);
+    let midi_interface = daisy::board_split_midi!(ccdr, pins);
 
-    let pins = board.split_gpios(dp.GPIOA.split(ccdr.peripheral.GPIOA),
-                                 dp.GPIOB.split(ccdr.peripheral.GPIOB),
-                                 dp.GPIOC.split(ccdr.peripheral.GPIOC),
-                                 dp.GPIOD.split(ccdr.peripheral.GPIOD),
-                                 dp.GPIOE.split(ccdr.peripheral.GPIOE),
-                                 dp.GPIOF.split(ccdr.peripheral.GPIOF),
-                                 dp.GPIOG.split(ccdr.peripheral.GPIOG));
-
-    let mut audio_interface = board.split_audio(&ccdr.clocks,
-                                                ccdr.peripheral.SAI1,
-                                                ccdr.peripheral.DMA1,
-                                                pins.AK4556);
-
-    let mut midi_interface = board.split_midi(&ccdr.clocks,
-                                              ccdr.peripheral.USART1,
-                                              (pins.SEED_PIN_13, pins.SEED_PIN_14));
+    loggit!("Hello audio and midi!");
 
 
     // - midi callback --------------------------------------------------------
 
-    let mut midi_parser = midi::Parser::new();
+    let mut midi_parser = instrument::midi::Parser::new();
+    let midi_note_clone = Arc::clone(&midi_note);
 
-    midi_interface.start(|byte| {
+    let midi_interface = midi_interface.start(move |byte| {
         midi_parser.rx(byte, |_channel, message| {
-            if let midi::Message::NoteOn { note, velocity: _ } = message {
-                midi_note.store(note, Ordering::Relaxed);
+            if let instrument::midi::Message::NoteOn { note, velocity: _ } = message {
+                loggit!("note_on: {:?}", note);
+                midi_note_clone.store(note, Ordering::Relaxed);
             }
         });
     }).unwrap();
@@ -68,12 +69,20 @@ fn main() -> ! {
 
     // - audio callback -------------------------------------------------------
 
-    audio_interface.start(|fs, block| {
+    let audio_interface = audio_interface.start(move |fs, block| {
         let midi_note = midi_note.load(Ordering::Relaxed);
-        let frequency = midi::to_hz(midi_note);
+        let frequency = instrument::midi::to_hz(midi_note);
         osc.dx = (1. / fs) * frequency;
         osc.block2(block);
     }).unwrap();
+
+
+    // - wrap audio & midi interfaces in a global mutex -----------------------
+
+    cortex_m::interrupt::free(|cs| {
+        AUDIO_INTERFACE.borrow(cs).replace(Some(audio_interface));
+        MIDI_INTERFACE.borrow(cs).replace(Some(midi_interface));
+    });
 
 
     // - main loop ------------------------------------------------------------
@@ -81,4 +90,38 @@ fn main() -> ! {
     loop {
         cortex_m::asm::wfi();
     }
+}
+
+
+// - interrupts ---------------------------------------------------------------
+
+/// interrupt handler for: usart1
+#[interrupt]
+fn USART1() {
+    cortex_m::interrupt::free(|cs| {
+        if let Some(midi_interface) = MIDI_INTERFACE.borrow(cs).borrow_mut().as_mut() {
+            match midi_interface.handle_interrupt_usart1() {
+                Ok(()) => (),
+                Err(e) => {
+                    loggit!("Failed to handle interrupt USART1: {:?}", e);
+                }
+            };
+        }
+    });
+}
+
+
+/// interrupt handler for: dma1, stream1
+#[interrupt]
+fn DMA1_STR1() {
+    cortex_m::interrupt::free(|cs| {
+        if let Some(audio_interface) = AUDIO_INTERFACE.borrow(cs).borrow_mut().as_mut() {
+            match audio_interface.handle_interrupt_dma1_str1() {
+                Ok(()) => (),
+                Err(e) => {
+                    loggit!("Failed to handle interrupt DMA1_STR1: {:?}", e);
+                }
+            };
+        }
+    });
 }

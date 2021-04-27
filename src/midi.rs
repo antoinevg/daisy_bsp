@@ -4,13 +4,12 @@
 pub use stm32h7xx_hal as hal;
 use hal::prelude::*;
 use hal::rcc;
+
 use hal::pac;
-use pac::interrupt;
 
-
-// - types --------------------------------------------------------------------
-
-#[repr(C)] pub struct OpaqueInterface { _private: [u8; 0] }
+mod log {
+    pub use crate::loggit as warn;
+}
 
 
 // - Interface ----------------------------------------------------------------
@@ -21,19 +20,21 @@ type Error = u32;
 pub struct Interface<'a> {
     rx: hal::serial::Rx<pac::USART1>,
     tx: hal::serial::Tx<pac::USART1>,
-    closure: Option<Box<dyn FnMut(u8) + 'a>>,
 
-    _marker: core::marker::PhantomData<&'a *const ()>,
+    #[cfg(not(feature = "alloc"))] function_ptr: Option<fn (u8)>,
+    #[cfg(any(feature = "alloc"))] closure: Option<Box<dyn FnMut (u8) + Send + 'a>>,
+
+    _marker: core::marker::PhantomData<&'a ()>,
 }
 
 
 impl<'a> Interface<'a> {
     pub fn init(clocks: &rcc::CoreClocks,
-                rec_usart1: rcc::rec::Usart1,
+                usart1_rec: rcc::rec::Usart1,
                 pins: impl hal::serial::Pins<pac::USART1>) -> Result<Interface<'a>, Error> {
         let usart1 = unsafe { pac::Peripherals::steal().USART1 };
 
-        let serial = usart1.serial(pins, 31_250.bps(), rec_usart1, clocks);
+        let serial = usart1.serial(pins, 31_250.bps(), usart1_rec, clocks);
         match serial {
             Ok(mut serial) => {
                 serial.listen(hal::serial::Event::Rxne); // TODO Tx & errors too
@@ -41,7 +42,10 @@ impl<'a> Interface<'a> {
                 Ok(Self {
                     rx,
                     tx,
-                    closure: None,
+
+                    #[cfg(not(feature = "alloc"))] function_ptr: None,
+                    #[cfg(any(feature = "alloc"))] closure: None,
+
                     _marker: core::marker::PhantomData
                 })
             },
@@ -49,54 +53,57 @@ impl<'a> Interface<'a> {
         }
     }
 
-    pub fn start<F: FnMut(u8) + 'a>(&mut self, closure: F) -> Result<&mut Self, Error> {
-        self.closure = Some(Box::new(closure));
-
-        let opaque_interface_ptr: *const OpaqueInterface = unsafe {
-            core::mem::transmute::<*const Interface,
-                                   *const OpaqueInterface>(self)
-        };
-        unsafe { INTERFACE_PTR = Some(opaque_interface_ptr); }
-
+    /// assign function pointer for interrupt callback and start interface
+    #[cfg(not(feature = "alloc"))]
+    pub fn start(mut self, function_ptr:fn (u8)) -> Result<Self, Error> {
+        self.function_ptr = Some(function_ptr);
         unsafe { pac::NVIC::unmask(pac::Interrupt::USART1); }
-
-        Ok(self)
-    }
-}
-
-
-// - usart interrupt handler --------------------------------------------------
-
-static mut INTERFACE_PTR: Option<*const OpaqueInterface> = None;
-
-#[interrupt]
-fn USART1() {
-    let usart1  = unsafe { &(*pac::USART1::ptr()) };
-    let isr = usart1.isr.read();
-    if isr.ore().bit_is_set() {
-        usart1.icr.write(|w| w.orecf().clear());
-        //hprintln!("USART1::irq -> overrun error").unwrap();
-    } else if isr.pe().bit_is_set() {
-        usart1.icr.write(|w| w.pecf().clear());
-        //hprintln!("USART1::irq -> parity error").unwrap();
-    } else if isr.fe().bit_is_set() {
-        usart1.icr.write(|w| w.fecf().clear());
-        //hprintln!("USART1::irq -> frame error").unwrap();
-    } else if isr.nf().bit_is_set() {
-        usart1.icr.write(|w| w.ncf().clear());
-        //hprintln!("USART1::irq -> noise error").unwrap();
+        Ok(self) // TODO type state for started interface
     }
 
-    if isr.rxne().bit_is_set() {
-        let byte = usart1.rdr.read().rdr().bits() as u8;
-        if let Some(interface_ptr) = unsafe { INTERFACE_PTR }  {
-            let interface_ptr: *mut Interface = unsafe {
-                core::mem::transmute::<*const OpaqueInterface,
-                                       *mut Interface>(interface_ptr)
-            };
-            if let Some(closure) = unsafe { &mut (*interface_ptr).closure } {
-                closure(byte);
-            }
+    /// assign closure for interrupt callback and start interface
+    #[cfg(any(feature = "alloc"))]
+    pub fn start<F: FnMut(u8) + Send + 'a>(mut self, closure: F) -> Result<Self, Error> {
+        self.closure = Some(Box::new(closure));
+        unsafe { pac::NVIC::unmask(pac::Interrupt::USART1); }
+        Ok(self) // TODO type state for started interface
+    }
+
+    pub fn handle_interrupt_usart1(&mut self) -> Result<(), Error> {
+        let usart1  = unsafe { &(*pac::USART1::ptr()) };
+        let isr = usart1.isr.read();
+        if isr.ore().bit_is_set() {
+            usart1.icr.write(|w| w.orecf().clear());
+            log::warn!("USART1::irq -> overrun error");
+        } else if isr.pe().bit_is_set() {
+            usart1.icr.write(|w| w.pecf().clear());
+            log::warn!("USART1::irq -> parity error");
+        } else if isr.fe().bit_is_set() {
+            usart1.icr.write(|w| w.fecf().clear());
+            log::warn!("USART1::irq -> frame error");
+        } else if isr.nf().bit_is_set() {
+            usart1.icr.write(|w| w.ncf().clear());
+            log::warn!("USART1::irq -> noise error");
+        }
+
+        // invoke midi callback
+        if isr.rxne().bit_is_set() {
+            let byte = usart1.rdr.read().rdr().bits() as u8;
+            self.invoke_callback(byte);
+        }
+
+        Ok(())
+    }
+
+    fn invoke_callback(&mut self, byte: u8) {
+        #[cfg(not(feature = "alloc"))]
+        if let Some(function_ptr) = self.function_ptr.as_mut() {
+            function_ptr(byte); // TODO should we pass self?
+        }
+
+        #[cfg(any(feature = "alloc"))]
+        if let Some(closure) = self.closure.as_mut() {
+            closure(byte);
         }
     }
 }

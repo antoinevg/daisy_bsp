@@ -1,10 +1,8 @@
 use stm32h7xx_hal as hal;
 
-use crate::audio;
 use crate::clocks;
 use crate::led;
 use crate::pins::*;
-use crate::midi;
 
 
 // - global static state ------------------------------------------------------
@@ -110,42 +108,6 @@ impl Board {
     pub fn split_led_user(&self, pin: LedUserPin) -> led::LedUser {
         led::LedUser::new(pin)
     }
-
-    pub fn split_audio(&self,
-                       clocks: &hal::rcc::CoreClocks,
-                       sai1_prec: hal::rcc::rec::Sai1,
-                       #[allow(unused_variables)] dma1_prec: hal::rcc::rec::Dma1,
-                       pins: AK4556Pins) -> audio::Interface {
-
-        let pins = (pins.PDN.into_push_pull_output(),
-                    pins.MCLK_A.into_alternate_af6(),
-                    pins.SCK_A.into_alternate_af6(),
-                    pins.FS_A.into_alternate_af6(),
-                    pins.SD_A.into_alternate_af6(),
-                    pins.SD_B.into_alternate_af6());
-
-        let sai1_prec: hal::rcc::rec::Sai1 = sai1_prec.kernel_clk_mux(hal::rcc::rec::Sai1ClkSel::PLL3_P);
-
-        let sai1_interface = audio::Interface::init(clocks,
-                                                    sai1_prec,
-                                                    pins,
-                                                    dma1_prec).unwrap();
-        sai1_interface
-    }
-
-    pub fn split_midi(&self,
-                      clocks: &hal::rcc::CoreClocks,
-                      usart1_prec: hal::rcc::rec::Usart1,
-                      pins: (SeedPin13, SeedPin14)) -> midi::Interface {
-        let pins = (
-            pins.0.into_alternate_af7(),  // USART1 TX
-            pins.1.into_alternate_af7(),  // USART1 RX
-        );
-        let midi_interface = midi::Interface::init(clocks,
-                                                   usart1_prec,
-                                                   pins).unwrap();
-        midi_interface
-    }
 }
 
 
@@ -184,12 +146,21 @@ macro_rules! board_split_gpios {
 
 #[macro_export]
 macro_rules! board_split_audio {
-    ($board:expr, $ccdr:expr, $pins:expr) => {
+    ($ccdr:expr, $pins:expr) => {
         {
-            $board.split_audio(&$ccdr.clocks,
-                               $ccdr.peripheral.SAI1,
-                               $ccdr.peripheral.DMA1,
-                               $pins.AK4556)
+            let pins = ($pins.AK4556.PDN.into_push_pull_output(),
+                        $pins.AK4556.MCLK_A.into_alternate_af6(),
+                        $pins.AK4556.SCK_A.into_alternate_af6(),
+                        $pins.AK4556.FS_A.into_alternate_af6(),
+                        $pins.AK4556.SD_A.into_alternate_af6(),
+                        $pins.AK4556.SD_B.into_alternate_af6());
+
+            let sai1_prec = $ccdr.peripheral.SAI1.kernel_clk_mux(daisy_bsp::hal::rcc::rec::Sai1ClkSel::PLL3_P);
+
+            daisy_bsp::audio::Interface::init(&$ccdr.clocks,
+                                              sai1_prec,
+                                              pins,
+                                              $ccdr.peripheral.DMA1).unwrap()
         }
     }
 }
@@ -197,11 +168,16 @@ macro_rules! board_split_audio {
 
 #[macro_export]
 macro_rules! board_split_midi {
-    ($board:expr, $ccdr:expr, $pins:expr) => {
+    ($ccdr:expr, $pins:expr) => {
         {
-            $board.split_midi(&$ccdr.clocks,
-                              $ccdr.peripheral.USART1,
-                              ($pins.SEED_PIN_13, $pins.SEED_PIN_14))
+            let pins = (
+                $pins.SEED_PIN_13.into_alternate_af7(),  // USART1 TX
+                $pins.SEED_PIN_14.into_alternate_af7(),  // USART1 RX
+            );
+
+            daisy_bsp::midi::Interface::init(&$ccdr.clocks,
+                                             $ccdr.peripheral.USART1,
+                                             pins).unwrap()
         }
     }
 }
