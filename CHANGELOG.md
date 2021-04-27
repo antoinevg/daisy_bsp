@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 -->
 
+## [0.4.1] - 2021-04-27
+### Added
+- New feature: `alloc`
+
+### Changed
+- Dropped the Peripheral Access Crate implementation of the audio driver in favour of the `embedded_hal` implementation.
+- Refactored the crate to make the requirement for [rust nightly and the `alloc` crate](https://doc.rust-lang.org/edition-guide/rust-next/alloc.html) optional. See the [`audio_*` examples](examples/) for more details.
+- Refactored the crate to remove implicit definitions of `#[interrupt]` handlers in favour of explicit declaration in program code. See the [`audio_*` examples](examples/) for more details.
+
+---
+
 ## [0.3.2] - 2021-04-01
 ### Changed
 - Changed license to MIT
@@ -22,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modified the MIDI API to work with the Daisy Pod's MIDI pin numbers by default.
 - Updated `stm32h7xx_hal` to `0.9.0`
 
+---
 
 ## [0.2.0] - 2021-02-03
 ### Added
