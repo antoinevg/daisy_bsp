@@ -22,6 +22,14 @@ pub const DMA_BUFFER_LENGTH:usize = HALF_DMA_BUFFER_LENGTH * 2; //  2 half-block
 pub const FS: time::Hertz = time::Hertz(48_000);
 
 
+// - static data --------------------------------------------------------------
+
+#[link_section = ".sram1_bss"]
+static mut TX_BUFFER: [u32; DMA_BUFFER_LENGTH] = [0; DMA_BUFFER_LENGTH];
+#[link_section = ".sram1_bss"]
+static mut RX_BUFFER: [u32; DMA_BUFFER_LENGTH] = [0; DMA_BUFFER_LENGTH];
+
+
 // - types --------------------------------------------------------------------
 
 pub type Frame = (f32, f32);
@@ -56,14 +64,6 @@ pub enum Error {
     I2c,
     Dma,
 }
-
-
-// - static data --------------------------------------------------------------
-
-#[link_section = ".sram1_bss"]
-static mut TX_BUFFER: [u32; DMA_BUFFER_LENGTH] = [0; DMA_BUFFER_LENGTH];
-#[link_section = ".sram1_bss"]
-static mut RX_BUFFER: [u32; DMA_BUFFER_LENGTH] = [0; DMA_BUFFER_LENGTH];
 
 
 // - audio::Interface ---------------------------------------------------------
@@ -222,7 +222,6 @@ impl<'a> Interface<'a> {
         Ok(())
     }
 
-
     pub fn handle_interrupt_dma1_str1(&mut self) -> Result<(), Error> {
         let transfer = self.hal_dma1_stream1.as_mut().unwrap();
 
@@ -240,7 +239,7 @@ impl<'a> Interface<'a> {
         };
 
         // callback buffer
-        static mut BLOCK: Block = [(0., 0.); BLOCK_LENGTH];
+        let mut block: Block = [(0., 0.); BLOCK_LENGTH];
 
         // convert & copy rx buffer to callback buffer
         let mut dma_index: usize = 0;
@@ -254,14 +253,14 @@ impl<'a> Interface<'a> {
 
             let y0 = u24_to_f32(rx_y0);
             let y1 = u24_to_f32(rx_y1);
-            unsafe { BLOCK[block_index] = (y1, y0); }
+            block[block_index] = (y1, y0);
 
             dma_index += 2;
             block_index += 1;
         }
 
         // invoke audio callback
-        self.invoke_callback(unsafe { &mut BLOCK });
+        self.invoke_callback(&mut block);
 
         // convert & copy callback buffer to tx buffer
         let mut dma_index: usize = 0;
@@ -270,7 +269,7 @@ impl<'a> Interface<'a> {
             let tx0: usize = dma_index + skip.0;
             let tx1: usize = tx0 + 1;
 
-            let (y0, y1) = unsafe { BLOCK[block_index] };
+            let (y0, y1) = block[block_index];
             unsafe { TX_BUFFER[tx0] = f32_to_u24(y0) };
             unsafe { TX_BUFFER[tx1] = f32_to_u24(y1) };
 
