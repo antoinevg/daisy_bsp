@@ -12,9 +12,15 @@ mod log {
 }
 
 
-// - Interface ----------------------------------------------------------------
+// - Error --------------------------------------------------------------------
 
-type Error = u32;
+#[derive(Debug)]
+pub enum Error {
+    Usart
+}
+
+
+// - Interface ----------------------------------------------------------------
 
 #[repr(C)]
 pub struct Interface<'a> {
@@ -37,7 +43,8 @@ impl<'a> Interface<'a> {
         let serial = usart1.serial(pins, 31_250.bps(), usart1_rec, clocks);
         match serial {
             Ok(mut serial) => {
-                serial.listen(hal::serial::Event::Rxne); // TODO Tx & errors too
+                serial.listen(hal::serial::Event::Rxne);
+                serial.listen(hal::serial::Event::Txne);
                 let (tx, rx) = serial.split();
                 Ok(Self {
                     rx,
@@ -49,7 +56,7 @@ impl<'a> Interface<'a> {
                     _marker: core::marker::PhantomData
                 })
             },
-            Err(_e) => Err(0), // TODO pass actual error up
+            Err(_e) => Err(Error::Usart),
         }
     }
 
@@ -58,7 +65,7 @@ impl<'a> Interface<'a> {
     pub fn start(mut self, function_ptr:fn (u8)) -> Result<Self, Error> {
         self.function_ptr = Some(function_ptr);
         unsafe { pac::NVIC::unmask(pac::Interrupt::USART1); }
-        Ok(self) // TODO type state for started interface
+        Ok(self)
     }
 
     /// assign closure for interrupt callback and start interface
@@ -66,7 +73,7 @@ impl<'a> Interface<'a> {
     pub fn start<F: FnMut(u8) + Send + 'a>(mut self, closure: F) -> Result<Self, Error> {
         self.closure = Some(Box::new(closure));
         unsafe { pac::NVIC::unmask(pac::Interrupt::USART1); }
-        Ok(self) // TODO type state for started interface
+        Ok(self)
     }
 
     pub fn handle_interrupt_usart1(&mut self) -> Result<(), Error> {
@@ -98,7 +105,7 @@ impl<'a> Interface<'a> {
     fn invoke_callback(&mut self, byte: u8) {
         #[cfg(not(feature = "alloc"))]
         if let Some(function_ptr) = self.function_ptr.as_mut() {
-            function_ptr(byte); // TODO should we pass self?
+            function_ptr(byte);
         }
 
         #[cfg(any(feature = "alloc"))]
