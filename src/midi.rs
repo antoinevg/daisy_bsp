@@ -44,7 +44,6 @@ impl<'a> Interface<'a> {
         match serial {
             Ok(mut serial) => {
                 serial.listen(hal::serial::Event::Rxne);
-                serial.listen(hal::serial::Event::Txne);
                 let (tx, rx) = serial.split();
                 Ok(Self {
                     rx,
