@@ -73,12 +73,12 @@ fn main() -> ! {
             }
         }
 
-        audio_interface.start(callback).unwrap()
+        audio_interface.spawn(callback).unwrap()
     };
 
     // handle callback with closure (needs alloc)
     #[cfg(any(feature = "alloc"))]
-    let audio_interface = audio_interface.start(|_fs, block| {
+    let audio_interface = audio_interface.spawn(|_fs, block| {
         for frame in block {
             let (left, right) = *frame;
             *frame = (left, right);

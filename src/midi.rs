@@ -61,7 +61,7 @@ impl<'a> Interface<'a> {
 
     /// assign function pointer for interrupt callback and start interface
     #[cfg(not(feature = "alloc"))]
-    pub fn start(mut self, function_ptr:fn (u8)) -> Result<Self, Error> {
+    pub fn spawn(mut self, function_ptr:fn (u8)) -> Result<Self, Error> {
         self.function_ptr = Some(function_ptr);
         unsafe { pac::NVIC::unmask(pac::Interrupt::USART1); }
         Ok(self)
@@ -69,7 +69,7 @@ impl<'a> Interface<'a> {
 
     /// assign closure for interrupt callback and start interface
     #[cfg(any(feature = "alloc"))]
-    pub fn start<F: FnMut(u8) + Send + 'a>(mut self, closure: F) -> Result<Self, Error> {
+    pub fn spawn<F: FnMut(u8) + Send + 'a>(mut self, closure: F) -> Result<Self, Error> {
         self.closure = Some(Box::new(closure));
         unsafe { pac::NVIC::unmask(pac::Interrupt::USART1); }
         Ok(self)

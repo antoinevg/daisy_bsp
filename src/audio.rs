@@ -170,22 +170,22 @@ impl<'a> Interface<'a> {
 
     /// assign function pointer for interrupt callback and start audio
     #[cfg(not(feature = "alloc"))]
-    pub fn start(mut self, function_ptr:fn (f32, &mut Block)) -> Result<Self, Error> {
+    pub fn spawn(mut self, function_ptr:fn (f32, &mut Block)) -> Result<Self, Error> {
         self.function_ptr = Some(function_ptr);
-        self.start_audio()?;
+        self.start()?;
         Ok(self) // TODO type state for started audio interface
     }
 
     /// assign closure for interrupt callback and start audio
     #[cfg(any(feature = "alloc"))]
-    pub fn start<F: FnMut(f32, &mut Block) + Send + Sync + 'a>(mut self, closure: F) -> Result<Self, Error> {
+    pub fn spawn<F: FnMut(f32, &mut Block) + Send + Sync + 'a>(mut self, closure: F) -> Result<Self, Error> {
         self.closure = Some(Box::new(closure));
-        self.start_audio()?;
+        self.start()?;
         Ok(self) // TODO type state for started audio interface
     }
 
 
-    fn start_audio(&mut self) -> Result<(), Error> {
+    fn start(&mut self) -> Result<(), Error> {
         // - AK4556 -----------------------------------------------------------
 
         let ak4556_reset = self.ak4556_reset.as_mut().unwrap();

@@ -94,7 +94,7 @@ fn main() -> ! {
         let mut osc_1: osc::Wavetable = osc::Wavetable::new(osc::Shape::Sin);
         let mut osc_2: osc::Wavetable = osc::Wavetable::new(osc::Shape::Saw);
 
-        audio_interface.start(move |fs, block| {
+        audio_interface.spawn(move |fs, block| {
             osc_1.dx = (1. / fs) * 110.00;
             osc_2.dx = (1. / fs) * 110.00;
             for frame in block {

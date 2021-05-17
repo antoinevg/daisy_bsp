@@ -57,7 +57,7 @@ fn main() -> ! {
     let mut midi_parser = instrument::midi::Parser::new();
     let midi_note_clone = Arc::clone(&midi_note);
 
-    let midi_interface = midi_interface.start(move |byte| {
+    let midi_interface = midi_interface.spawn(move |byte| {
         midi_parser.rx(byte, |_channel, message| {
             if let instrument::midi::Message::NoteOn { note, velocity: _ } = message {
                 loggit!("note_on: {:?}", note);
@@ -69,7 +69,7 @@ fn main() -> ! {
 
     // - audio callback -------------------------------------------------------
 
-    let audio_interface = audio_interface.start(move |fs, block| {
+    let audio_interface = audio_interface.spawn(move |fs, block| {
         let midi_note = midi_note.load(Ordering::Relaxed);
         let frequency = instrument::midi::to_hz(midi_note);
         osc.dx = (1. / fs) * frequency;
