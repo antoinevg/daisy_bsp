@@ -30,7 +30,7 @@ targets = ["thumbv7em-none-eabihf"]
 [dependencies]
 cortex-m = "^0.7.1"
 cortex-m-rt = { version = "^0.6.13", features = ["device"] }
-stm32h7xx-hal = { version = "0.11.0", features = [ "stm32h750v", "rt", "revision_v", "usb_hs" ] }
+stm32h7xx-hal = { version = "0.11.0", features = [ "stm32h750v", "rt", "revision_v", "usb_hs", "xspi" ] }
 cty = "0.2.1"
 cortex-m-semihosting = "0.3.5"
 
