@@ -53,7 +53,7 @@ impl Board {
                        gpioc: hal::gpio::gpioc::Parts,
                        gpiod: hal::gpio::gpiod::Parts,
                        gpioe: hal::gpio::gpioe::Parts,
-                       _gpiof: hal::gpio::gpiof::Parts,
+                       gpiof: hal::gpio::gpiof::Parts,
                        gpiog: hal::gpio::gpiog::Parts) -> Pins {
         Pins {
             SEED_PIN_0: gpiob.pb12,
@@ -96,7 +96,14 @@ impl Board {
                 SD_A:   gpioe.pe6,  // SAI1 SD_A
                 SD_B:   gpioe.pe3,  // SAI1 SD_B
             },
-            FMC: (),
+            FMC: FMCPins {
+                IO0: gpiof.pf8,
+                IO1: gpiof.pf9,
+                IO2: gpiof.pf7,
+                IO3: gpiof.pf6,
+                SCK: gpiof.pf10,
+                CS:  gpiog.pg6,
+            },
             SDRAM: (),
             USB2: USB2Pins {
                 DN: gpioa.pa11, // USB2 D-

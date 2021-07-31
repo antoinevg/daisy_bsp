@@ -52,6 +52,17 @@ pub struct USB2Pins {
     pub DP: hal::gpio::gpioa::PA12<hal::gpio::Analog>,  // USB2 D+
 }
 
+#[allow(non_snake_case)]
+pub struct FMCPins {
+    // https://github.com/electro-smith/libDaisy/blob/3dda55e9ed55a2f8b6bc4fa6aa2c7ae134c317ab/src/per/qspi.c#L695
+    pub IO0: hal::gpio::gpiof::PF8<hal::gpio::Analog>,  // (SI)
+    pub IO1: hal::gpio::gpiof::PF9<hal::gpio::Analog>,  // (SO)
+    pub IO2: hal::gpio::gpiof::PF7<hal::gpio::Analog>,
+    pub IO3: hal::gpio::gpiof::PF6<hal::gpio::Analog>,
+    pub SCK: hal::gpio::gpiof::PF10<hal::gpio::Analog>,
+    pub CS: hal::gpio::gpiog::PG6<hal::gpio::Analog>,
+}
+
 
 // - Pins ---------------------------------------------------------------------
 
@@ -93,7 +104,7 @@ pub struct Pins {
     // board peripherals
     pub LED_USER: LedUserPin,
     pub AK4556: AK4556Pins,
-    pub FMC: (),   // TODO
+    pub FMC: FMCPins,
     pub SDRAM: (), // TODO
     pub USB2: USB2Pins,
 }
