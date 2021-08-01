@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 -->
 
+## [0.4.2] - 2021-08-01
+### Added
+- Expose the (Q)SPI pins to access flash memory (Tx @phoracek!)
+
+---
+
 ## [0.4.1] - 2021-04-27
 ### Added
 - New feature: `alloc`
