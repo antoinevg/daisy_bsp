@@ -6,7 +6,6 @@
 //! Board support crate for Daisy hardware
 //!
 //! # Usage - see examples/
-//! ```
 
 
 // - modules ------------------------------------------------------------------
