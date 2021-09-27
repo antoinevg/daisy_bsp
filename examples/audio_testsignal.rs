@@ -85,7 +85,7 @@ fn main() -> ! {
             }
         }
 
-        audio_interface.start(callback)
+        audio_interface.spawn(callback)
     };
 
     // handle callback with closure (needs alloc)
