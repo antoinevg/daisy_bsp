@@ -5,7 +5,7 @@ use stm32h7xx_hal as hal;
 use hal::gpio;
 use hal::time;
 use hal::dma;
-use hal::sai::{ self, SaiI2sExt, SaiChannel };
+use hal::sai::{ self, SaiI2sExt, SaiChannel, I2sUsers };
 
 use hal::hal as embedded_hal;
 use embedded_hal::digital::v2::OutputPin;
@@ -148,8 +148,7 @@ impl<'a> Interface<'a> {
             sai::I2SDataSize::BITS_24,
             sai1_rec,
             clocks,
-            sai1_tx_config,
-            Some(sai1_rx_config),
+            I2sUsers::new(sai1_tx_config).add_slave(sai1_rx_config),
         );
 
         Ok(Self {
