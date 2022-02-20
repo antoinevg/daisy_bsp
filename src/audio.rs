@@ -1,5 +1,5 @@
 #[cfg(any(feature = "alloc"))] extern crate alloc;
-#[cfg(any(feature = "alloc"))] use alloc::prelude::v1::Box;
+#[cfg(any(feature = "alloc"))] use alloc::boxed::Box;
 
 use stm32h7xx_hal as hal;
 use hal::gpio;
@@ -155,7 +155,7 @@ impl<'a> Interface<'a> {
             fs: FS,
 
             #[cfg(not(feature = "alloc"))] function_ptr: None,
-            #[cfg(any(feature = "alloc"))] closure: None,
+            #[cfg(any(feature = "alloc"))] closure: Option::None,
 
             ak4556_reset: Some(pins.0),
             hal_dma1_stream0: Some(dma1_str0),

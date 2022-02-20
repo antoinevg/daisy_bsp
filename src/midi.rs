@@ -1,5 +1,5 @@
 #[cfg(any(feature = "alloc"))] extern crate alloc;
-#[cfg(any(feature = "alloc"))] use alloc::prelude::v1::Box;
+#[cfg(any(feature = "alloc"))] use alloc::boxed::Box;
 
 pub use stm32h7xx_hal as hal;
 use hal::prelude::*;
@@ -50,7 +50,7 @@ impl<'a> Interface<'a> {
                     tx,
 
                     #[cfg(not(feature = "alloc"))] function_ptr: None,
-                    #[cfg(any(feature = "alloc"))] closure: None,
+                    #[cfg(any(feature = "alloc"))] closure: Option::None,
 
                     _marker: core::marker::PhantomData
                 })
