@@ -1,6 +1,5 @@
-pub use stm32h7xx_hal as hal;
 use hal::gpio;
-
+pub use stm32h7xx_hal as hal;
 
 // - traits -------------------------------------------------------------------
 
@@ -12,7 +11,6 @@ pub trait Led {
     /// Turns the LED on
     fn on(&mut self);
 }
-
 
 // - types --------------------------------------------------------------------
 

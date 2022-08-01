@@ -1,15 +1,14 @@
 #![no_main]
 #![no_std]
 
-use panic_semihosting as _;
 use cortex_m_rt::entry;
+use panic_semihosting as _;
 
 use daisy_bsp::hal;
-use hal::{pac, prelude::*};
 use hal::nb::block;
+use hal::{pac, prelude::*};
 
 use core::fmt::Write;
-
 
 #[entry]
 fn main() -> ! {
@@ -27,8 +26,8 @@ fn main() -> ! {
     // GPIOB in the RCC register.
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
 
-    let tx = gpiob.pb14.into_alternate();    // USART1 TX - GPIO29 - Pin 36 <= GPIOB 14
-    let rx = gpiob.pb15.into_alternate();    // USART1 RX - GPIO30 - Pin 37 => GPIOB 15
+    let tx = gpiob.pb14.into_alternate(); // USART1 TX - GPIO29 - Pin 36 <= GPIOB 14
+    let rx = gpiob.pb15.into_alternate(); // USART1 RX - GPIO30 - Pin 37 => GPIOB 15
 
     // Configure the serial peripheral.
     let serial = dp

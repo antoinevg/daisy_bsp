@@ -1,9 +1,11 @@
-#[cfg(any(feature = "alloc"))] extern crate alloc;
-#[cfg(any(feature = "alloc"))] use alloc::boxed::Box;
+#[cfg(any(feature = "alloc"))]
+extern crate alloc;
+#[cfg(any(feature = "alloc"))]
+use alloc::boxed::Box;
 
-pub use stm32h7xx_hal as hal;
 use hal::prelude::*;
 use hal::rcc;
+pub use stm32h7xx_hal as hal;
 
 use hal::pac;
 
@@ -11,14 +13,12 @@ mod log {
     pub use crate::loggit as warn;
 }
 
-
 // - Error --------------------------------------------------------------------
 
 #[derive(Debug)]
 pub enum Error {
-    Usart
+    Usart,
 }
-
 
 // - Interface ----------------------------------------------------------------
 
@@ -27,17 +27,20 @@ pub struct Interface<'a> {
     rx: hal::serial::Rx<pac::USART1>,
     tx: hal::serial::Tx<pac::USART1>,
 
-    #[cfg(not(feature = "alloc"))] function_ptr: Option<fn (u8)>,
-    #[cfg(any(feature = "alloc"))] closure: Option<Box<dyn FnMut (u8) + Send + 'a>>,
+    #[cfg(not(feature = "alloc"))]
+    function_ptr: Option<fn(u8)>,
+    #[cfg(any(feature = "alloc"))]
+    closure: Option<Box<dyn FnMut(u8) + Send + 'a>>,
 
     _marker: core::marker::PhantomData<&'a ()>,
 }
 
-
 impl<'a> Interface<'a> {
-    pub fn init(clocks: &rcc::CoreClocks,
-                usart1_rec: rcc::rec::Usart1,
-                pins: impl hal::serial::Pins<pac::USART1>) -> Result<Interface<'a>, Error> {
+    pub fn init(
+        clocks: &rcc::CoreClocks,
+        usart1_rec: rcc::rec::Usart1,
+        pins: impl hal::serial::Pins<pac::USART1>,
+    ) -> Result<Interface<'a>, Error> {
         let usart1 = unsafe { pac::Peripherals::steal().USART1 };
 
         let serial = usart1.serial(pins, 31_250.bps(), usart1_rec, clocks);
@@ -49,21 +52,25 @@ impl<'a> Interface<'a> {
                     rx,
                     tx,
 
-                    #[cfg(not(feature = "alloc"))] function_ptr: None,
-                    #[cfg(any(feature = "alloc"))] closure: Option::None,
+                    #[cfg(not(feature = "alloc"))]
+                    function_ptr: None,
+                    #[cfg(any(feature = "alloc"))]
+                    closure: Option::None,
 
-                    _marker: core::marker::PhantomData
+                    _marker: core::marker::PhantomData,
                 })
-            },
+            }
             Err(_e) => Err(Error::Usart),
         }
     }
 
     /// assign function pointer for interrupt callback and start interface
     #[cfg(not(feature = "alloc"))]
-    pub fn spawn(mut self, function_ptr:fn (u8)) -> Result<Self, Error> {
+    pub fn spawn(mut self, function_ptr: fn(u8)) -> Result<Self, Error> {
         self.function_ptr = Some(function_ptr);
-        unsafe { pac::NVIC::unmask(pac::Interrupt::USART1); }
+        unsafe {
+            pac::NVIC::unmask(pac::Interrupt::USART1);
+        }
         Ok(self)
     }
 
@@ -71,12 +78,14 @@ impl<'a> Interface<'a> {
     #[cfg(any(feature = "alloc"))]
     pub fn spawn<F: FnMut(u8) + Send + 'a>(mut self, closure: F) -> Result<Self, Error> {
         self.closure = Some(Box::new(closure));
-        unsafe { pac::NVIC::unmask(pac::Interrupt::USART1); }
+        unsafe {
+            pac::NVIC::unmask(pac::Interrupt::USART1);
+        }
         Ok(self)
     }
 
     pub fn handle_interrupt_usart1(&mut self) -> Result<(), Error> {
-        let usart1  = unsafe { &(*pac::USART1::ptr()) };
+        let usart1 = unsafe { &(*pac::USART1::ptr()) };
         let isr = usart1.isr.read();
         if isr.ore().bit_is_set() {
             usart1.icr.write(|w| w.orecf().clear());

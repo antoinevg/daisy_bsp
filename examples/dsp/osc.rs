@@ -1,13 +1,11 @@
 #![allow(dead_code)]
- #[allow(unused_imports)]
-
+#[allow(unused_imports)]
 use super::wavetable;
-
 
 // - wavetable oscillator -----------------------------------------------------
 
 pub struct Wavetable {
-    pub dx: f32,           // frequency * (1 / fs)
+    pub dx: f32, // frequency * (1 / fs)
     phasor: f32,
     shape: Shape,
 }
@@ -21,7 +19,7 @@ impl Wavetable {
     pub const fn new(shape: Shape) -> Wavetable {
         Wavetable {
             shape: shape,
-            dx:  0.004_988_662_f32, // 220Hz @ fs=44100KHz
+            dx: 0.004_988_662_f32, // 220Hz @ fs=44100KHz
             phasor: 0.,
         }
     }

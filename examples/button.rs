@@ -1,29 +1,29 @@
 #![no_main]
 #![no_std]
 
-use panic_semihosting as _;
 use cortex_m_rt::entry;
+use panic_semihosting as _;
 
 use daisy_bsp::hal;
+use hal::pac;
 use hal::prelude::*;
 use hal::rcc::PllConfigStrategy;
-use hal::pac;
 
 #[entry]
 fn main() -> ! {
     let dp = pac::Peripherals::take().unwrap();
 
-
     // - power & clocks -------------------------------------------------------
 
     let pwr = dp.PWR.constrain();
     let pwrcfg = pwr.vos0(&dp.SYSCFG).freeze();
-    let ccdr = dp.RCC.constrain()
-        .use_hse(16.MHz())                           // external crystal @ 16 MHz
+    let ccdr = dp
+        .RCC
+        .constrain()
+        .use_hse(16.MHz()) // external crystal @ 16 MHz
         .pll1_strategy(PllConfigStrategy::Iterative) // pll1 drives system clock
-        .sys_ck(480.MHz())                           // system clock @ 480 MHz
+        .sys_ck(480.MHz()) // system clock @ 480 MHz
         .freeze(pwrcfg, &dp.SYSCFG);
-
 
     // - pins -----------------------------------------------------------------
 
@@ -34,7 +34,6 @@ fn main() -> ! {
 
     // DAISY_PIN_35 aka DAISY_GPIO_28 aka DAISY_SAI2_SCK aka DAISY_ADC_11
     let button = gpioa.pa2.into_pull_up_input();
-
 
     // - main loop ------------------------------------------------------------
 
