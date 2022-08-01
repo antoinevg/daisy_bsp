@@ -12,20 +12,20 @@ use crate::audio;
 // - constants ----------------------------------------------------------------
 
 // SAI clock uses pll3
-const PLL3_P: Hertz = Hertz(audio::FS.0 * 256);
+const PLL3_P: Hertz = Hertz::Hz(audio::FS.raw() * 256);
 
 
 // - types --------------------------------------------------------------------
 
 pub trait SeedCrystal {
-    const CRYSTAL_FREQ: MegaHertz = MegaHertz(16);
+    const CRYSTAL_FREQ: MegaHertz = MegaHertz::MHz(16);
 
     fn use_seed_crystal(self) -> Self;
 }
 
 impl SeedCrystal for rcc::Rcc {
     fn use_seed_crystal(self) -> Self {
-        self.use_hse(Self::CRYSTAL_FREQ)
+        self.use_hse(Self::CRYSTAL_FREQ.convert())
     }
 }
 
@@ -52,18 +52,18 @@ pub fn configure(pwr: pwr::Pwr, rcc: rcc::Rcc, syscfg: &pac::SYSCFG) -> rcc::Ccd
     #[cfg(not(feature = "log-itm"))]
     let ccdr = rcc.use_seed_crystal()                     // high speed external crystal @ 16 MHz
         .pll1_strategy(rcc::PllConfigStrategy::Iterative) // pll1 drives system clock
-        .sys_ck(480.mhz())                                // system clock @ 480 MHz
+        .sys_ck(480.MHz())                                // system clock @ 480 MHz
         .pll3_p_ck(PLL3_P)                                // audio clock  @ 12.288 MHz
-        .per_ck(4.mhz())                                  // peripheral clock @ 4 MHz
+        .per_ck(4.MHz())                                  // peripheral clock @ 4 MHz
         .freeze(pwrcfg, syscfg);
 
     #[cfg(any(feature = "log-itm"))]
     let ccdr = rcc.use_seed_crystal()                     // high speed external crystal @ 16 MHz
         .pll1_strategy(rcc::PllConfigStrategy::Iterative) // pll1 drives system clock
-        .sys_ck(480.mhz())                                // system clock @ 480 MHz
-        .pll1_r_ck(480.mhz())                             // for TRACECK
+        .sys_ck(480.MHz())                                // system clock @ 480 MHz
+        .pll1_r_ck(480.MHz())                             // for TRACECK
         .pll3_p_ck(PLL3_P)                                // audio clock  @ 12.288 MHz
-        .per_ck(4.mhz())                                  // peripheral clock @ 4 MHz
+        .per_ck(4.MHz())                                  // peripheral clock @ 4 MHz
         .freeze(pwrcfg, syscfg);
 
     // enable itm support
@@ -75,7 +75,7 @@ pub fn configure(pwr: pwr::Pwr, rcc: rcc::Rcc, syscfg: &pac::SYSCFG) -> rcc::Ccd
         crate::itm::enable_itm(&mut cp.DCB,
                                &dp.DBGMCU,
                                &mut cp.ITM,
-                               ccdr.clocks.c_ck().0,
+                               ccdr.clocks.c_ck().raw(),
                                swo_frequency);
     }
 

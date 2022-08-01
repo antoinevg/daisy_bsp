@@ -28,12 +28,12 @@ fn main() -> ! {
                                  dp.GPIOF.split(ccdr.peripheral.GPIOF),
                                  dp.GPIOG.split(ccdr.peripheral.GPIOG));
 
-    let mut led_user = daisy::led::LedUser::new(pins.LED_USER);
+    let mut led_user = daisy::led::UserLed::new(pins.LED_USER);
 
 
     // - main loop ------------------------------------------------------------
 
-    let one_second = ccdr.clocks.sys_ck().0;
+    let one_second = ccdr.clocks.sys_ck().raw();
 
     loop {
         led_user.on();

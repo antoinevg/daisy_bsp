@@ -52,14 +52,14 @@ fn main() -> ! {
                                  dp.GPIOF.split(ccdr.peripheral.GPIOF),
                                  dp.GPIOG.split(ccdr.peripheral.GPIOG));
 
-    let mut led_user = daisy::led::LedUser::new(pins.LED_USER);
+    let mut led_user = daisy::led::UserLed::new(pins.LED_USER);
 
     let pins = (pins.AK4556.PDN.into_push_pull_output(),
-                pins.AK4556.MCLK_A.into_alternate_af6(),
-                pins.AK4556.SCK_A.into_alternate_af6(),
-                pins.AK4556.FS_A.into_alternate_af6(),
-                pins.AK4556.SD_A.into_alternate_af6(),
-                pins.AK4556.SD_B.into_alternate_af6());
+                pins.AK4556.MCLK_A.into_alternate(),
+                pins.AK4556.SCK_A.into_alternate(),
+                pins.AK4556.FS_A.into_alternate(),
+                pins.AK4556.SD_A.into_alternate(),
+                pins.AK4556.SD_B.into_alternate());
 
     let sai1_prec = ccdr.peripheral.SAI1.kernel_clk_mux(hal::rcc::rec::Sai1ClkSel::PLL3_P);
 
@@ -118,7 +118,7 @@ fn main() -> ! {
 
     // - main loop ------------------------------------------------------------
 
-    let one_second = ccdr.clocks.sys_ck().0;
+    let one_second = ccdr.clocks.sys_ck().raw();
 
     loop {
         led_user.on();

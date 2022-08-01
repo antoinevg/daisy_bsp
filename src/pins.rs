@@ -11,7 +11,7 @@ pub type SeedPin5 = hal::gpio::gpiod::PD2 <hal::gpio::Analog>;   // PIN_06, SD C
 pub type SeedPin6 = hal::gpio::gpioc::PC12<hal::gpio::Analog>;   // PIN_07, SD CLK, UART5 Tx
 pub type SeedPin7 = hal::gpio::gpiog::PG10<hal::gpio::Analog>;   // PIN_08, SPI1 CS
 pub type SeedPin8 = hal::gpio::gpiog::PG11<hal::gpio::Analog>;   // PIN_09, SPI1 SCK, SPDIFRX1
-pub type SeedPin9 = hal::gpio::gpiob::PB4 <hal::gpio::Alternate<hal::gpio::AF0>>;  // PIN_10, SPI1 MOSI
+pub type SeedPin9 = hal::gpio::gpiob::PB4 <hal::gpio::Alternate<0>>;  // PIN_10, SPI1 MOSI
 pub type SeedPin10 = hal::gpio::gpiob::PB5 <hal::gpio::Analog>;  // PIN_11, SPI1 MISO
 pub type SeedPin11 = hal::gpio::gpiob::PB8 <hal::gpio::Analog>;  // PIN_12, I2C1 SCL, UART4 Rx
 pub type SeedPin12 = hal::gpio::gpiob::PB9 <hal::gpio::Analog>;  // PIN_13, I2C1 SDA, UART4 Tx
@@ -34,7 +34,7 @@ pub type SeedPin28 = hal::gpio::gpioa::PA2 <hal::gpio::Analog>;  // PIN_35, SAI2
 pub type SeedPin29 = hal::gpio::gpiob::PB14<hal::gpio::Analog>;  // PIN_36, USB1 D-, USART1 Tx
 pub type SeedPin30 = hal::gpio::gpiob::PB15<hal::gpio::Analog>;  // PIN_37, USB1 D+, USART1 Rx
 
-pub type LedUserPin = hal::gpio::gpioc::PC7 <hal::gpio::Analog>; // LED_USER
+pub type LedUserPin = hal::gpio::gpioc::PC7<hal::gpio::Analog>; // LED_USER
 
 #[allow(non_snake_case)]
 pub struct AK4556Pins {

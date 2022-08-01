@@ -2,15 +2,12 @@
 #[cfg(any(feature = "alloc"))] use alloc::boxed::Box;
 
 use stm32h7xx_hal as hal;
+use hal::pac;
+
 use hal::gpio;
-use hal::time;
 use hal::dma;
 use hal::sai::{ self, SaiI2sExt, SaiChannel, I2sUsers };
-
-use hal::hal as embedded_hal;
-use embedded_hal::digital::v2::OutputPin;
-
-use hal::pac;
+use hal::time::Hertz;
 
 
 // - global constants ---------------------------------------------------------
@@ -19,7 +16,7 @@ pub const BLOCK_LENGTH: usize = 32;                             // 32 samples
 pub const HALF_DMA_BUFFER_LENGTH: usize = BLOCK_LENGTH * 2;     //  2 channels
 pub const DMA_BUFFER_LENGTH:usize = HALF_DMA_BUFFER_LENGTH * 2; //  2 half-blocks
 
-pub const FS: time::Hertz = time::Hertz(48_000);
+pub const FS: Hertz = Hertz::Hz(48_000);
 
 
 // - static data --------------------------------------------------------------
@@ -37,11 +34,11 @@ pub type Block = [Frame; BLOCK_LENGTH];
 
 pub type Sai1Pins = (
     gpio::gpiob::PB11<gpio::Output<gpio::PushPull>>,  // PDN
-    gpio::gpioe::PE2<gpio::Alternate<gpio::AF6>>,     // MCLK_A
-    gpio::gpioe::PE5<gpio::Alternate<gpio::AF6>>,     // SCK_A
-    gpio::gpioe::PE4<gpio::Alternate<gpio::AF6>>,     // FS_A
-    gpio::gpioe::PE6<gpio::Alternate<gpio::AF6>>,     // SD_A
-    gpio::gpioe::PE3<gpio::Alternate<gpio::AF6>>,     // SD_B
+    gpio::gpioe::PE2<gpio::Alternate<6>>,     // MCLK_A
+    gpio::gpioe::PE5<gpio::Alternate<6>>,     // SCK_A
+    gpio::gpioe::PE4<gpio::Alternate<6>>,     // FS_A
+    gpio::gpioe::PE6<gpio::Alternate<6>>,     // SD_A
+    gpio::gpioe::PE3<gpio::Alternate<6>>,     // SD_B
 );
 
 type TransferDma1Str0 = dma::Transfer<dma::dma::Stream0<pac::DMA1>,
@@ -69,7 +66,7 @@ pub enum Error {
 // - audio::Interface ---------------------------------------------------------
 
 pub struct Interface<'a> {
-    pub fs: time::Hertz,
+    pub fs: Hertz,
 
     #[cfg(not(feature = "alloc"))] function_ptr: Option<fn (f32, &mut Block)>,
     #[cfg(any(feature = "alloc"))] closure: Option<Box<dyn FnMut (f32, &mut Block) + Send + Sync + 'a>>,
@@ -188,10 +185,10 @@ impl<'a> Interface<'a> {
         // - AK4556 -----------------------------------------------------------
 
         let ak4556_reset = self.ak4556_reset.as_mut().unwrap();
-        ak4556_reset.set_low().unwrap();
+        ak4556_reset.set_low();
         use cortex_m::asm;
         asm::delay(480_000);     // ~ 1ms (datasheet specifies minimum 150ns)
-        ak4556_reset.set_high().unwrap();
+        ak4556_reset.set_high();
 
         // - start audio ------------------------------------------------------
 
@@ -283,12 +280,12 @@ impl<'a> Interface<'a> {
     fn invoke_callback(&mut self, block: &mut Block) {
         #[cfg(not(feature = "alloc"))]
         if let Some(function_ptr) = self.function_ptr.as_mut() {
-            function_ptr(self.fs.0 as f32, block);
+            function_ptr(self.fs.raw() as f32, block);
         }
 
         #[cfg(any(feature = "alloc"))]
         if let Some(closure) = self.closure.as_mut() {
-            closure(self.fs.0 as f32, block);
+            closure(self.fs.raw() as f32, block);
         }
     }
 }

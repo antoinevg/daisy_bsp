@@ -1,7 +1,7 @@
 [package]
 name = "daisy_bsp"
-version = "0.4.2"
-authors = ["Antoine van Gelder <antoine@flowdsp.io>"]
+version = "0.5.0"
+authors = [ "Antoine van Gelder <antoine@flowdsp.io>" ]
 edition = "2018"
 license = "MIT"
 description = "A board support package for the Electro-Smith Daisy Seed"
@@ -28,45 +28,28 @@ targets = ["thumbv7em-none-eabihf"]
 # - dependencies --------------------------------------------------------------
 
 [dependencies]
-cortex-m = "^0.7.1"
-cortex-m-rt = { version = "^0.6.13", features = ["device"] }
-stm32h7xx-hal = { version = "0.11.0", features = [ "stm32h750v", "rt", "revision_v", "usb_hs" ] }
+cortex-m = "0.7.5"
+cortex-m-rt = { version = "0.7.1", features = ["device"] }
+stm32h7xx-hal = { version = "0.12.2", features = [ "stm32h750v", "rt", "revision_v", "usb_hs" ] }
 cty = "0.2.1"
-cortex-m-semihosting = "0.3.5"
+cortex-m-semihosting = "0.5.0"
 
 # - optional dependencies used by features
 
-[dependencies.static-alloc]
-version = "0.2.2"
-optional = true
-
-[dependencies.without-alloc]
-version = "0.2.1"
-optional = true
+static-alloc = { version = "0.2.3", optional = true }
+without-alloc = { version = "0.2.1", optional = true }
 
 # - optional dependencies used by examples
 
-[dependencies.num]
-version = "0.3.1"
-default-features = false
-features = [ "libm" ]
-optional = true
-
-[dependencies.num-derive]
-version = "0.3.3"
-default-features = false
-optional = true
-
-[dependencies.num-traits]
-version = "0.2.14"
-default-features = false
-optional = true
+num = { version = "0.3.1", default-features = false, features = [ "libm"] , optional = true }
+num-derive = { version = "0.3.3", default-features = false, optional = true }
+num-traits = { version = "0.2.14", default-features = false, optional = true }
 
 
 # - dev dependencies ----------------------------------------------------------
 
 [dev-dependencies]
-panic-itm = { version = "~0.4.1" }
+panic-itm = { version = "0.4.2" }
 panic-halt = "0.2.0"
 panic-semihosting = { version = "0.5.6" }
 

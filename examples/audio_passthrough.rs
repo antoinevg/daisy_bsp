@@ -15,7 +15,6 @@ use daisy::hal;
 use hal::prelude::*;
 use hal::rcc;
 use hal::gpio;
-use hal::hal::digital::v2::OutputPin;
 
 use daisy::pac;
 use pac::interrupt;
@@ -48,11 +47,11 @@ fn main() -> ! {
     let gpioe: gpio::gpioe::Parts = dp.GPIOE.split(ccdr.peripheral.GPIOE);
     let ak4556_pins = (
         gpiob.pb11.into_push_pull_output(), // PDN
-        gpioe.pe2.into_alternate_af6(),     // MCLK_A
-        gpioe.pe5.into_alternate_af6(),     // SCK_A
-        gpioe.pe4.into_alternate_af6(),     // FS_A
-        gpioe.pe6.into_alternate_af6(),     // SD_A
-        gpioe.pe3.into_alternate_af6(),     // SD_B
+        gpioe.pe2.into_alternate(),     // MCLK_A
+        gpioe.pe5.into_alternate(),     // SCK_A
+        gpioe.pe4.into_alternate(),     // FS_A
+        gpioe.pe6.into_alternate(),     // SD_A
+        gpioe.pe3.into_alternate(),     // SD_B
     );
 
 
@@ -93,12 +92,12 @@ fn main() -> ! {
 
     // - main loop ------------------------------------------------------------
 
-    let one_second = ccdr.clocks.sys_ck().0;
+    let one_second = ccdr.clocks.sys_ck().raw();
     loop {
-        led_user.set_high().unwrap();
+        led_user.set_high();
         asm::delay(one_second);
 
-        led_user.set_low().unwrap();
+        led_user.set_low();
         asm::delay(one_second);
     }
 }

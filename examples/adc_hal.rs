@@ -10,14 +10,10 @@ use cortex_m_rt::entry;
 use cortex_m::asm;
 
 use daisy_bsp::hal;
+use hal::{pac, prelude::*};
 use hal::rcc::PllConfigStrategy;
 use hal::rcc::rec::AdcClkSel;
 use hal::{adc, delay::Delay};
-
-use hal::hal as embedded_hal;
-use embedded_hal::digital::v2::OutputPin;
-
-use hal::{pac, prelude::*};
 
 
 #[entry]
@@ -30,10 +26,10 @@ fn main() -> ! {
     let pwr = dp.PWR.constrain();
     let pwrcfg = pwr.vos0(&dp.SYSCFG).freeze();
     let mut ccdr = dp.RCC.constrain()
-        .use_hse(16.mhz())                                     // external crystal @ 16 MHz
+        .use_hse(16.MHz())                                     // external crystal @ 16 MHz
         .pll1_strategy(PllConfigStrategy::Iterative)           // pll1 drives system clock
-        .sys_ck(480.mhz())                                     // system clock @ 480 MHz
-        .per_ck(4.mhz())                                       // adc1 clock @ 4 MHz
+        .sys_ck(480.MHz())                                     // system clock @ 480 MHz
+        .per_ck(4.MHz())                                       // adc1 clock @ 4 MHz
         .freeze(pwrcfg, &dp.SYSCFG);
 
     // switch adc_ker_ck_input multiplexer to per_ck
@@ -60,7 +56,7 @@ fn main() -> ! {
 
     // - main loop ------------------------------------------------------------
 
-    let scale_factor = ccdr.clocks.sys_ck().0 as f32 / 65_535.;
+    let scale_factor = ccdr.clocks.sys_ck().raw() as f32 / 65_535.;
 
     loop {
         let pot_1: u32 = adc1.read(&mut adc1_channel_4).unwrap();
@@ -68,10 +64,10 @@ fn main() -> ! {
 
         let ticks = (pot_1 as f32 * scale_factor) as u32;
 
-        led_user.set_high().unwrap();
+        led_user.set_high();
         asm::delay(ticks);
 
-        led_user.set_low().unwrap();
+        led_user.set_low();
         asm::delay(ticks);
     }
 }

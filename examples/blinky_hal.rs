@@ -8,9 +8,6 @@ use cortex_m::asm;
 use daisy_bsp::hal;
 use hal::{pac, prelude::*};
 use hal::rcc::PllConfigStrategy;
-use hal::hal as embedded_hal;
-use embedded_hal::digital::v2::OutputPin;
-
 
 #[entry]
 fn main() -> ! {
@@ -21,9 +18,9 @@ fn main() -> ! {
     let pwr = dp.PWR.constrain();
     let pwrcfg = pwr.vos0(&dp.SYSCFG).freeze();
     let ccdr = dp.RCC.constrain()
-        .use_hse(16.mhz())                                     // external crystal @ 16 MHz
+        .use_hse(16.MHz())                                     // external crystal @ 16 MHz
         .pll1_strategy(PllConfigStrategy::Iterative)           // pll1 drives system clock
-        .sys_ck(480.mhz())                                     // system clock @ 480 MHz
+        .sys_ck(480.MHz())                                     // system clock @ 480 MHz
         .freeze(pwrcfg, &dp.SYSCFG);
 
 
@@ -37,10 +34,10 @@ fn main() -> ! {
 
     loop {
         loop {
-            led_user.set_high().unwrap();
+            led_user.set_high();
             asm::delay(480_000_000);
 
-            led_user.set_low().unwrap();
+            led_user.set_low();
             asm::delay(480_000_000);
         }
     }
