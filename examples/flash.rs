@@ -27,7 +27,7 @@ fn main() -> ! {
         dp.GPIOG.split(ccdr.peripheral.GPIOG),
     );
 
-    let mut led_user = daisy::led::LedUser::new(pins.LED_USER);
+    let mut led_user = daisy::led::UserLed::new(pins.LED_USER);
     let mut flash =
         daisy::flash::Flash::new(&ccdr.clocks, dp.QUADSPI, ccdr.peripheral.QSPI, pins.FMC);
 
