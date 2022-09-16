@@ -1,26 +1,23 @@
-#[cfg(any(feature = "alloc"))] extern crate alloc;
-#[cfg(any(feature = "alloc"))] use alloc::prelude::v1::Box;
-
-use stm32h7xx_hal as hal;
-use hal::gpio;
-use hal::time;
-use hal::dma;
-use hal::sai::{ self, SaiI2sExt, SaiChannel, I2sUsers };
-
-use hal::hal as embedded_hal;
-use embedded_hal::digital::v2::OutputPin;
+#[cfg(any(feature = "alloc"))]
+extern crate alloc;
+#[cfg(any(feature = "alloc"))]
+use alloc::boxed::Box;
 
 use hal::pac;
+use stm32h7xx_hal as hal;
 
+use hal::dma;
+use hal::gpio;
+use hal::sai::{self, I2sUsers, SaiChannel, SaiI2sExt};
+use hal::time::Hertz;
 
 // - global constants ---------------------------------------------------------
 
-pub const BLOCK_LENGTH: usize = 32;                             // 32 samples
-pub const HALF_DMA_BUFFER_LENGTH: usize = BLOCK_LENGTH * 2;     //  2 channels
-pub const DMA_BUFFER_LENGTH:usize = HALF_DMA_BUFFER_LENGTH * 2; //  2 half-blocks
+pub const BLOCK_LENGTH: usize = 32; // 32 samples
+pub const HALF_DMA_BUFFER_LENGTH: usize = BLOCK_LENGTH * 2; //  2 channels
+pub const DMA_BUFFER_LENGTH: usize = HALF_DMA_BUFFER_LENGTH * 2; //  2 half-blocks
 
-pub const FS: time::Hertz = time::Hertz(48_000);
-
+pub const FS: Hertz = Hertz::Hz(48_000);
 
 // - static data --------------------------------------------------------------
 
@@ -29,33 +26,35 @@ static mut TX_BUFFER: [u32; DMA_BUFFER_LENGTH] = [0; DMA_BUFFER_LENGTH];
 #[link_section = ".sram1_bss"]
 static mut RX_BUFFER: [u32; DMA_BUFFER_LENGTH] = [0; DMA_BUFFER_LENGTH];
 
-
 // - types --------------------------------------------------------------------
 
 pub type Frame = (f32, f32);
 pub type Block = [Frame; BLOCK_LENGTH];
 
 pub type Sai1Pins = (
-    gpio::gpiob::PB11<gpio::Output<gpio::PushPull>>,  // PDN
-    gpio::gpioe::PE2<gpio::Alternate<gpio::AF6>>,     // MCLK_A
-    gpio::gpioe::PE5<gpio::Alternate<gpio::AF6>>,     // SCK_A
-    gpio::gpioe::PE4<gpio::Alternate<gpio::AF6>>,     // FS_A
-    gpio::gpioe::PE6<gpio::Alternate<gpio::AF6>>,     // SD_A
-    gpio::gpioe::PE3<gpio::Alternate<gpio::AF6>>,     // SD_B
+    gpio::gpiob::PB11<gpio::Output<gpio::PushPull>>, // PDN
+    gpio::gpioe::PE2<gpio::Alternate<6>>,            // MCLK_A
+    gpio::gpioe::PE5<gpio::Alternate<6>>,            // SCK_A
+    gpio::gpioe::PE4<gpio::Alternate<6>>,            // FS_A
+    gpio::gpioe::PE6<gpio::Alternate<6>>,            // SD_A
+    gpio::gpioe::PE3<gpio::Alternate<6>>,            // SD_B
 );
 
-type TransferDma1Str0 = dma::Transfer<dma::dma::Stream0<pac::DMA1>,
-                                      pac::SAI1,
-                                      dma::MemoryToPeripheral,
-                                      &'static mut [u32; DMA_BUFFER_LENGTH],
-                                      dma::DBTransfer>;
+type TransferDma1Str0 = dma::Transfer<
+    dma::dma::Stream0<pac::DMA1>,
+    pac::SAI1,
+    dma::MemoryToPeripheral,
+    &'static mut [u32; DMA_BUFFER_LENGTH],
+    dma::DBTransfer,
+>;
 
-type TransferDma1Str1 = dma::Transfer<dma::dma::Stream1<pac::DMA1>,
-                                      pac::SAI1,
-                                      dma::PeripheralToMemory,
-                                      &'static mut [u32; DMA_BUFFER_LENGTH],
-                                      dma::DBTransfer>;
-
+type TransferDma1Str1 = dma::Transfer<
+    dma::dma::Stream1<pac::DMA1>,
+    pac::SAI1,
+    dma::PeripheralToMemory,
+    &'static mut [u32; DMA_BUFFER_LENGTH],
+    dma::DBTransfer,
+>;
 
 // - Error --------------------------------------------------------------------
 
@@ -65,14 +64,15 @@ pub enum Error {
     Dma,
 }
 
-
 // - audio::Interface ---------------------------------------------------------
 
 pub struct Interface<'a> {
-    pub fs: time::Hertz,
+    pub fs: Hertz,
 
-    #[cfg(not(feature = "alloc"))] function_ptr: Option<fn (f32, &mut Block)>,
-    #[cfg(any(feature = "alloc"))] closure: Option<Box<dyn FnMut (f32, &mut Block) + Send + Sync + 'a>>,
+    #[cfg(not(feature = "alloc"))]
+    function_ptr: Option<fn(f32, &mut Block)>,
+    #[cfg(any(feature = "alloc"))]
+    closure: Option<Box<dyn FnMut(f32, &mut Block) + Send + Sync + 'a>>,
 
     ak4556_reset: Option<gpio::gpiob::PB11<gpio::Output<gpio::PushPull>>>,
     hal_dma1_stream0: Option<TransferDma1Str0>,
@@ -82,18 +82,17 @@ pub struct Interface<'a> {
     _marker: core::marker::PhantomData<&'a ()>,
 }
 
-
 impl<'a> Interface<'a> {
     pub fn init(
         clocks: &hal::rcc::CoreClocks,
         sai1_rec: hal::rcc::rec::Sai1, // reset and enable control
         pins: Sai1Pins,
-        dma1_rec: hal::rcc::rec::Dma1
+        dma1_rec: hal::rcc::rec::Dma1,
     ) -> Result<Interface<'a>, Error> {
-
         // - configure dma1 ---------------------------------------------------
 
-        let dma1_streams = dma::dma::StreamsTuple::new(unsafe { pac::Peripherals::steal().DMA1 }, dma1_rec);
+        let dma1_streams =
+            dma::dma::StreamsTuple::new(unsafe { pac::Peripherals::steal().DMA1 }, dma1_rec);
 
         // dma1 stream 0
         let tx_buffer: &'static mut [u32; DMA_BUFFER_LENGTH] = unsafe { &mut TX_BUFFER };
@@ -113,8 +112,9 @@ impl<'a> Interface<'a> {
 
         // dma1 stream 1
         let rx_buffer: &'static mut [u32; DMA_BUFFER_LENGTH] = unsafe { &mut RX_BUFFER };
-        let dma_config = dma_config.transfer_complete_interrupt(true)
-                                   .half_transfer_interrupt(true);
+        let dma_config = dma_config
+            .transfer_complete_interrupt(true)
+            .half_transfer_interrupt(true);
         let dma1_str1: dma::Transfer<_, _, dma::PeripheralToMemory, _, _> = dma::Transfer::init(
             dma1_streams.1,
             unsafe { pac::Peripherals::steal().SAI1 },
@@ -134,13 +134,7 @@ impl<'a> Interface<'a> {
             .set_frame_sync_active_high(true)
             .set_clock_strobe(sai::I2SClockStrobe::Rising);
 
-        let sai1_pins = (
-            pins.1,
-            pins.2,
-            pins.3,
-            pins.4,
-            Some(pins.5),
-        );
+        let sai1_pins = (pins.1, pins.2, pins.3, pins.4, Some(pins.5));
 
         let sai1 = unsafe { pac::Peripherals::steal().SAI1 }.i2s_ch_a(
             sai1_pins,
@@ -154,8 +148,10 @@ impl<'a> Interface<'a> {
         Ok(Self {
             fs: FS,
 
-            #[cfg(not(feature = "alloc"))] function_ptr: None,
-            #[cfg(any(feature = "alloc"))] closure: None,
+            #[cfg(not(feature = "alloc"))]
+            function_ptr: None,
+            #[cfg(any(feature = "alloc"))]
+            closure: Option::None,
 
             ak4556_reset: Some(pins.0),
             hal_dma1_stream0: Some(dma1_str0),
@@ -166,10 +162,9 @@ impl<'a> Interface<'a> {
         })
     }
 
-
     /// assign function pointer for interrupt callback and start audio
     #[cfg(not(feature = "alloc"))]
-    pub fn spawn(mut self, function_ptr:fn (f32, &mut Block)) -> Result<Self, Error> {
+    pub fn spawn(mut self, function_ptr: fn(f32, &mut Block)) -> Result<Self, Error> {
         self.function_ptr = Some(function_ptr);
         self.start()?;
         Ok(self) // TODO type state for started audio interface
@@ -177,26 +172,30 @@ impl<'a> Interface<'a> {
 
     /// assign closure for interrupt callback and start audio
     #[cfg(any(feature = "alloc"))]
-    pub fn spawn<F: FnMut(f32, &mut Block) + Send + Sync + 'a>(mut self, closure: F) -> Result<Self, Error> {
+    pub fn spawn<F: FnMut(f32, &mut Block) + Send + Sync + 'a>(
+        mut self,
+        closure: F,
+    ) -> Result<Self, Error> {
         self.closure = Some(Box::new(closure));
         self.start()?;
         Ok(self) // TODO type state for started audio interface
     }
 
-
     fn start(&mut self) -> Result<(), Error> {
         // - AK4556 -----------------------------------------------------------
 
         let ak4556_reset = self.ak4556_reset.as_mut().unwrap();
-        ak4556_reset.set_low().unwrap();
+        ak4556_reset.set_low();
         use cortex_m::asm;
-        asm::delay(480_000);     // ~ 1ms (datasheet specifies minimum 150ns)
-        ak4556_reset.set_high().unwrap();
+        asm::delay(480_000); // ~ 1ms (datasheet specifies minimum 150ns)
+        ak4556_reset.set_high();
 
         // - start audio ------------------------------------------------------
 
         // unmask interrupt handler for dma 1, stream 1
-        unsafe { pac::NVIC::unmask(pac::Interrupt::DMA1_STR1); }
+        unsafe {
+            pac::NVIC::unmask(pac::Interrupt::DMA1_STR1);
+        }
 
         let dma1_str0 = self.hal_dma1_stream0.as_mut().unwrap();
         let dma1_str1 = self.hal_dma1_stream1.as_mut().unwrap();
@@ -210,7 +209,7 @@ impl<'a> Interface<'a> {
             sai1.enable_dma(SaiChannel::ChannelA);
 
             // wait until sai1's fifo starts to receive data
-            while sai1_rb.cha.sr.read().flvl().is_empty() { }
+            while sai1_rb.cha.sr.read().flvl().is_empty() {}
 
             sai1.enable();
 
@@ -227,11 +226,9 @@ impl<'a> Interface<'a> {
         let skip = if transfer.get_half_transfer_flag() {
             transfer.clear_half_transfer_interrupt();
             (0, HALF_DMA_BUFFER_LENGTH)
-
         } else if transfer.get_transfer_complete_flag() {
             transfer.clear_transfer_complete_interrupt();
             (HALF_DMA_BUFFER_LENGTH, 0)
-
         } else {
             // TODO handle error flags once HAL supports them
             return Err(Error::Dma);
@@ -279,20 +276,18 @@ impl<'a> Interface<'a> {
         Ok(())
     }
 
-
     fn invoke_callback(&mut self, block: &mut Block) {
         #[cfg(not(feature = "alloc"))]
         if let Some(function_ptr) = self.function_ptr.as_mut() {
-            function_ptr(self.fs.0 as f32, block);
+            function_ptr(self.fs.raw() as f32, block);
         }
 
         #[cfg(any(feature = "alloc"))]
         if let Some(closure) = self.closure.as_mut() {
-            closure(self.fs.0 as f32, block);
+            closure(self.fs.raw() as f32, block);
         }
     }
 }
-
 
 // - conversion helpers -------------------------------------------------------
 
@@ -302,7 +297,7 @@ use core::num::Wrapping;
 #[inline(always)]
 fn u24_to_f32(y: u32) -> f32 {
     let y = (Wrapping(y) + Wrapping(0x0080_0000)).0 & 0x00FF_FFFF; // convert to i32
-    let y = (y as f32 / 8_388_608.) - 1.;  // (2^24) / 2
+    let y = (y as f32 / 8_388_608.) - 1.; // (2^24) / 2
     y
 }
 

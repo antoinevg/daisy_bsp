@@ -12,32 +12,29 @@ use core::sync::atomic::{AtomicU8, Ordering};
 use cortex_m::interrupt::Mutex;
 use cortex_m_rt::entry;
 
-use daisy_bsp as daisy;
 use daisy::loggit;
+use daisy_bsp as daisy;
 
 use daisy::pac;
 use pac::interrupt;
 
-
 mod dsp;
 mod instrument;
 
-
 // - static global state ------------------------------------------------------
 
-static AUDIO_INTERFACE: Mutex<RefCell<Option<daisy::audio::Interface>>> = Mutex::new(RefCell::new(None));
-static MIDI_INTERFACE: Mutex<RefCell<Option<daisy::midi::Interface>>> = Mutex::new(RefCell::new(None));
-
+static AUDIO_INTERFACE: Mutex<RefCell<Option<daisy::audio::Interface>>> =
+    Mutex::new(RefCell::new(None));
+static MIDI_INTERFACE: Mutex<RefCell<Option<daisy::midi::Interface>>> =
+    Mutex::new(RefCell::new(None));
 
 #[entry]
 fn main() -> ! {
-
     // - state ----------------------------------------------------------------
 
     let midi_note = Arc::new(AtomicU8::new(69));
 
     let mut osc: dsp::osc::Wavetable = dsp::osc::Wavetable::new(dsp::osc::Shape::Sin);
-
 
     // - board setup ----------------------------------------------------------
 
@@ -51,31 +48,32 @@ fn main() -> ! {
 
     loggit!("Hello audio and midi!");
 
-
     // - midi callback --------------------------------------------------------
 
     let mut midi_parser = instrument::midi::Parser::new();
     let midi_note_clone = Arc::clone(&midi_note);
 
-    let midi_interface = midi_interface.spawn(move |byte| {
-        midi_parser.rx(byte, |_channel, message| {
-            if let instrument::midi::Message::NoteOn { note, velocity: _ } = message {
-                loggit!("note_on: {:?}", note);
-                midi_note_clone.store(note, Ordering::Relaxed);
-            }
-        });
-    }).unwrap();
-
+    let midi_interface = midi_interface
+        .spawn(move |byte| {
+            midi_parser.rx(byte, |_channel, message| {
+                if let instrument::midi::Message::NoteOn { note, velocity: _ } = message {
+                    loggit!("note_on: {:?}", note);
+                    midi_note_clone.store(note, Ordering::Relaxed);
+                }
+            });
+        })
+        .unwrap();
 
     // - audio callback -------------------------------------------------------
 
-    let audio_interface = audio_interface.spawn(move |fs, block| {
-        let midi_note = midi_note.load(Ordering::Relaxed);
-        let frequency = instrument::midi::to_hz(midi_note);
-        osc.dx = (1. / fs) * frequency;
-        osc.block2(block);
-    }).unwrap();
-
+    let audio_interface = audio_interface
+        .spawn(move |fs, block| {
+            let midi_note = midi_note.load(Ordering::Relaxed);
+            let frequency = instrument::midi::to_hz(midi_note);
+            osc.dx = (1. / fs) * frequency;
+            osc.block2(block);
+        })
+        .unwrap();
 
     // - wrap audio & midi interfaces in a global mutex -----------------------
 
@@ -84,14 +82,12 @@ fn main() -> ! {
         MIDI_INTERFACE.borrow(cs).replace(Some(midi_interface));
     });
 
-
     // - main loop ------------------------------------------------------------
 
     loop {
         cortex_m::asm::wfi();
     }
 }
-
 
 // - interrupts ---------------------------------------------------------------
 
@@ -109,7 +105,6 @@ fn USART1() {
         }
     });
 }
-
 
 /// interrupt handler for: dma1, stream1
 #[interrupt]

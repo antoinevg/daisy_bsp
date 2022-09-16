@@ -22,10 +22,14 @@ pub unsafe fn enable_itm(
     // DBGMCU_CR: Ensure debug blocks are clocked before interacting with them  (page 3350)
     // *(0x5C00_1004 as *mut u32)
     dbgmcu.cr.modify(|_, w| {
-        w.d3dbgcken().set_bit()   // D3 domain debug clock enable
-         .d1dbgcken().set_bit()   // D1 domain debug clock enable
-         .traceclken().set_bit()  // Enable trace port clock, TRACECLK
-         .dbgsleep_d1().set_bit() // Automatic clock stop/power-down disabled
+        w.d3dbgcken()
+            .set_bit() // D3 domain debug clock enable
+            .d1dbgcken()
+            .set_bit() // D1 domain debug clock enable
+            .traceclken()
+            .set_bit() // Enable trace port clock, TRACECLK
+            .dbgsleep_d1()
+            .set_bit() // Automatic clock stop/power-down disabled
     });
 
     // SWO_LAR: Unlock SWO (LAR = Lock Access Register)
@@ -42,9 +46,8 @@ pub unsafe fn enable_itm(
     *(0x5c00_30f0 as *mut _) = 0x2;
 
     // SWTF_CTRL Trace Funnel: Enable for CM7
-    *(0x5c00_4000 as *mut u32) |=
-        (0 << 1)               | // ENS1 - Slave port S1 enabled (Cortex-M4)
-        (1 << 0);                // ENS0 - Slave port S0 enabled (Cortex-M7)
+    *(0x5c00_4000 as *mut u32) |= (0 << 1)               | // ENS1 - Slave port S1 enabled (Cortex-M4)
+        (1 << 0); // ENS0 - Slave port S0 enabled (Cortex-M7)
 
     // ITM_LAR: Unlock ITM
     // *(0xE000_0FB0 as *mut u32) = 0xC5AC_CE55;
@@ -59,6 +62,6 @@ pub unsafe fn enable_itm(
     itm.tcr.write(
         (0b00_0001 << 16) | // TraceBusID
         (1 << 3)          | // TXENA  - hardware event packet forwarding enable (enable SWO output ?)
-        (1 << 0),           // ITMENA - enable the ITM
+        (1 << 0), // ITMENA - enable the ITM
     );
 }

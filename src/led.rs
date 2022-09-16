@@ -1,9 +1,5 @@
-pub use stm32h7xx_hal as hal;
-use hal::hal as embedded_hal;
-
 use hal::gpio;
-use embedded_hal::digital::v2::OutputPin;
-
+pub use stm32h7xx_hal as hal;
 
 // - traits -------------------------------------------------------------------
 
@@ -16,28 +12,27 @@ pub trait Led {
     fn on(&mut self);
 }
 
-
 // - types --------------------------------------------------------------------
 
-#[allow(non_snake_case)]
-pub struct Leds {
-    pub USER: LedUser,
-}
+pub struct UserLed(pub gpio::gpioc::PC7<gpio::Output<gpio::PushPull>>);
 
-pub struct LedUser(pub gpio::gpioc::PC7<gpio::Output<gpio::PushPull>>);
-
-impl LedUser {
-    pub fn new<Mode>(pin: gpio::gpioc::PC7<Mode>) -> Self {
-        LedUser(pin.into_push_pull_output())
+impl UserLed {
+    pub fn new(pin: gpio::gpioc::PC7<hal::gpio::Analog>) -> Self {
+        UserLed(pin.into_push_pull_output())
     }
 }
 
-impl Led for LedUser {
+impl Led for UserLed {
     fn on(&mut self) {
-        self.0.set_high().unwrap();
+        self.0.set_high();
     }
 
     fn off(&mut self) {
-        self.0.set_low().unwrap();
+        self.0.set_low()
     }
+}
+
+#[allow(non_snake_case)]
+pub struct UserLeds {
+    pub user: UserLed,
 }

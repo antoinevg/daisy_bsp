@@ -4,9 +4,9 @@
 use core::cell::RefCell;
 use cortex_m::interrupt::Mutex;
 
-use panic_semihosting as _;
-use cortex_m_rt::entry;
 use cortex_m::asm;
+use cortex_m_rt::entry;
+use panic_semihosting as _;
 
 use daisy_bsp as daisy;
 
@@ -23,51 +23,50 @@ use daisy::loggit;
 mod dsp;
 use dsp::osc;
 
-
 // - static global state ------------------------------------------------------
 
 static AUDIO_INTERFACE: Mutex<RefCell<Option<audio::Interface>>> = Mutex::new(RefCell::new(None));
-
 
 // - entry point --------------------------------------------------------------
 
 #[entry]
 fn main() -> ! {
-
     // - board setup ----------------------------------------------------------
 
     let board = daisy::Board::take().unwrap();
 
     let dp = pac::Peripherals::take().unwrap();
 
-    let ccdr = board.freeze_clocks(dp.PWR.constrain(),
-                                   dp.RCC.constrain(),
-                                   &dp.SYSCFG);
+    let ccdr = board.freeze_clocks(dp.PWR.constrain(), dp.RCC.constrain(), &dp.SYSCFG);
 
-    let pins = board.split_gpios(dp.GPIOA.split(ccdr.peripheral.GPIOA),
-                                 dp.GPIOB.split(ccdr.peripheral.GPIOB),
-                                 dp.GPIOC.split(ccdr.peripheral.GPIOC),
-                                 dp.GPIOD.split(ccdr.peripheral.GPIOD),
-                                 dp.GPIOE.split(ccdr.peripheral.GPIOE),
-                                 dp.GPIOF.split(ccdr.peripheral.GPIOF),
-                                 dp.GPIOG.split(ccdr.peripheral.GPIOG));
+    let pins = board.split_gpios(
+        dp.GPIOA.split(ccdr.peripheral.GPIOA),
+        dp.GPIOB.split(ccdr.peripheral.GPIOB),
+        dp.GPIOC.split(ccdr.peripheral.GPIOC),
+        dp.GPIOD.split(ccdr.peripheral.GPIOD),
+        dp.GPIOE.split(ccdr.peripheral.GPIOE),
+        dp.GPIOF.split(ccdr.peripheral.GPIOF),
+        dp.GPIOG.split(ccdr.peripheral.GPIOG),
+    );
 
-    let mut led_user = daisy::led::LedUser::new(pins.LED_USER);
+    let mut led_user = daisy::led::UserLed::new(pins.LED_USER);
 
-    let pins = (pins.AK4556.PDN.into_push_pull_output(),
-                pins.AK4556.MCLK_A.into_alternate_af6(),
-                pins.AK4556.SCK_A.into_alternate_af6(),
-                pins.AK4556.FS_A.into_alternate_af6(),
-                pins.AK4556.SD_A.into_alternate_af6(),
-                pins.AK4556.SD_B.into_alternate_af6());
+    let pins = (
+        pins.AK4556.PDN.into_push_pull_output(),
+        pins.AK4556.MCLK_A.into_alternate(),
+        pins.AK4556.SCK_A.into_alternate(),
+        pins.AK4556.FS_A.into_alternate(),
+        pins.AK4556.SD_A.into_alternate(),
+        pins.AK4556.SD_B.into_alternate(),
+    );
 
-    let sai1_prec = ccdr.peripheral.SAI1.kernel_clk_mux(hal::rcc::rec::Sai1ClkSel::PLL3_P);
+    let sai1_prec = ccdr
+        .peripheral
+        .SAI1
+        .kernel_clk_mux(hal::rcc::rec::Sai1ClkSel::PLL3_P);
 
-    let audio_interface = audio::Interface::init(&ccdr.clocks,
-                                                 sai1_prec,
-                                                 pins,
-                                                 ccdr.peripheral.DMA1).unwrap();
-
+    let audio_interface =
+        audio::Interface::init(&ccdr.clocks, sai1_prec, pins, ccdr.peripheral.DMA1).unwrap();
 
     // - audio callback -------------------------------------------------------
 
@@ -80,8 +79,7 @@ fn main() -> ! {
             unsafe { OSC_1.dx = (1. / fs) * 110.00 };
             unsafe { OSC_2.dx = (1. / fs) * 110.00 };
             for frame in block {
-                *frame = (unsafe { OSC_1.step() },
-                          unsafe { OSC_2.step() });
+                *frame = (unsafe { OSC_1.step() }, unsafe { OSC_2.step() });
             }
         }
 
@@ -115,10 +113,9 @@ fn main() -> ! {
         AUDIO_INTERFACE.borrow(cs).replace(Some(audio_interface));
     });
 
-
     // - main loop ------------------------------------------------------------
 
-    let one_second = ccdr.clocks.sys_ck().0;
+    let one_second = ccdr.clocks.sys_ck().raw();
 
     loop {
         led_user.on();
@@ -127,7 +124,6 @@ fn main() -> ! {
         asm::delay(one_second);
     }
 }
-
 
 // - interrupts ---------------------------------------------------------------
 
