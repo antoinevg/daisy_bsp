@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 -->
 
+## [0.5.1] - 2022-09-23
+### Added
+- QSQPI flash memory driver (tx @phoracek!)
+
+
 ## [0.5.0] - 2022-07-02
 ### Changed
 - Update `cortex-m` to `0.7.5`
