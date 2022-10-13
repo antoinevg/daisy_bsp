@@ -11,6 +11,7 @@
 #[cfg(any(feature = "alloc"))]
 pub mod alloc;
 pub mod audio;
+pub mod audio_wm8731;
 pub mod board;
 pub mod clocks;
 pub mod flash;

@@ -68,8 +68,8 @@ impl Board {
             SEED_PIN_8: gpiog.pg11,
             SEED_PIN_9: gpiob.pb4,
             SEED_PIN_10: gpiob.pb5,
-            SEED_PIN_11: gpiob.pb8,
-            SEED_PIN_12: gpiob.pb9,
+            SEED_PIN_11: gpiob.pb8,  // I2C1 SCL / UART4 Tx
+            SEED_PIN_12: gpiob.pb9,  // I2C1 SDA / UART4 Rx
             SEED_PIN_13: gpiob.pb6,
             SEED_PIN_14: gpiob.pb7,
             SEED_PIN_15: gpioc.pc0,
@@ -81,11 +81,11 @@ impl Board {
             SEED_PIN_21: gpioc.pc4,
             SEED_PIN_22: gpioa.pa5,
             SEED_PIN_23: gpioa.pa4,
-            SEED_PIN_24: gpioa.pa1,
-            SEED_PIN_25: gpioa.pa0,
-            SEED_PIN_26: gpiod.pd11,
-            SEED_PIN_27: gpiog.pg9,
-            SEED_PIN_28: gpioa.pa2,
+            SEED_PIN_24: gpioa.pa1,  // SAI2 MCLK
+            SEED_PIN_25: gpioa.pa0,  // SAI2 SD B
+            SEED_PIN_26: gpiod.pd11, // SAI2 SD A
+            SEED_PIN_27: gpiog.pg9,  // SAI2 FS
+            SEED_PIN_28: gpioa.pa2,  // SAI2 SCK
             SEED_PIN_29: gpiob.pb14,
             SEED_PIN_30: gpiob.pb15,
             LED_USER: gpioc.pc7,
