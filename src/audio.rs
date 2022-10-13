@@ -126,12 +126,12 @@ impl<'a> Interface<'a> {
         // - configure sai1 ---------------------------------------------------
 
         let sai1_tx_config = sai::I2SChanConfig::new(sai::I2SDir::Tx)
-            .set_frame_sync_active_high(true)
+            .set_frame_sync_active_high(false)
             .set_clock_strobe(sai::I2SClockStrobe::Falling);
 
         let sai1_rx_config = sai::I2SChanConfig::new(sai::I2SDir::Rx)
             .set_sync_type(sai::I2SSync::Internal)
-            .set_frame_sync_active_high(true)
+            .set_frame_sync_active_high(false)
             .set_clock_strobe(sai::I2SClockStrobe::Rising);
 
         let sai1_pins = (pins.1, pins.2, pins.3, pins.4, Some(pins.5));
