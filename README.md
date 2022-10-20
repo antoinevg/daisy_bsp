@@ -13,11 +13,6 @@ cargo generate \
 ```
 
 
-# Discussion
-
-https://forum.electro-smith.com/t/rust-starter-for-daisy-seed/
-
-
 # Status
 
 Work in progress.
