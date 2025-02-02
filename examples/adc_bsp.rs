@@ -27,7 +27,7 @@ fn main() -> ! {
     let mut ccdr = board.freeze_clocks(dp.PWR.constrain(), dp.RCC.constrain(), &dp.SYSCFG);
 
     // switch adc_ker_ck_input multiplexer to per_ck
-    ccdr.peripheral.kernel_adc_clk_mux(AdcClkSel::PER);
+    ccdr.peripheral.kernel_adc_clk_mux(AdcClkSel::Per);
 
     let pins = board.split_gpios(
         dp.GPIOA.split(ccdr.peripheral.GPIOA),
@@ -44,9 +44,15 @@ fn main() -> ! {
     let cp = cortex_m::Peripherals::take().unwrap();
     let mut delay = Delay::new(cp.SYST, ccdr.clocks);
 
-    let mut adc1 =
-        adc::Adc::adc1(dp.ADC1, &mut delay, ccdr.peripheral.ADC12, &ccdr.clocks).enable();
-    adc1.set_resolution(adc::Resolution::SIXTEENBIT);
+    let mut adc1 = adc::Adc::adc1(
+        dp.ADC1,
+        4.MHz(),
+        &mut delay,
+        ccdr.peripheral.ADC12,
+        &ccdr.clocks,
+    )
+    .enable();
+    adc1.set_resolution(adc::Resolution::SixteenBit);
 
     let mut adc1_channel_4 = pins.SEED_PIN_21.into_analog(); // Daisy Pod: POT_1
     let mut adc1_channel_0 = pins.SEED_PIN_15.into_analog(); // Daisy Pod: POT_2

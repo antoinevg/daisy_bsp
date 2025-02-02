@@ -35,7 +35,7 @@ fn main() -> ! {
     let sai1_rec = ccdr
         .peripheral
         .SAI1
-        .kernel_clk_mux(rcc::rec::Sai1ClkSel::PLL3_P);
+        .kernel_clk_mux(rcc::rec::Sai1ClkSel::Pll3P);
 
     // - configure pins -------------------------------------------------------
 

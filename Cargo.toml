@@ -1,6 +1,6 @@
 [package]
 name = "daisy_bsp"
-version = "0.5.1"
+version = "0.6.0"
 authors = [ "Antoine van Gelder <antoine@flowdsp.io>" ]
 edition = "2018"
 license = "MIT"
@@ -28,30 +28,30 @@ targets = ["thumbv7em-none-eabihf"]
 # - dependencies --------------------------------------------------------------
 
 [dependencies]
-cortex-m = "0.7.5"
-cortex-m-rt = { version = "0.7.1", features = ["device"] }
-stm32h7xx-hal = { version = "0.12.2", features = [ "stm32h750v", "rt", "revision_v", "usb_hs", "xspi" ] }
-cty = "0.2.1"
+cortex-m = "0.7.7"
+cortex-m-rt = { version = "0.7.5", features = ["device"] }
+stm32h7xx-hal = { version = "0.16.0", features = [ "stm32h750v", "rt", "revision_v", "usb_hs", "xspi" ] }
+cty = "0.2.2"
 cortex-m-semihosting = "0.5.0"
 
 # - optional dependencies used by features
 
-static-alloc = { version = "0.2.3", optional = true }
-without-alloc = { version = "0.2.1", optional = true }
+static-alloc = { version = "0.2.5", optional = true }
+without-alloc = { version = "0.2.2", optional = true }
 
 # - optional dependencies used by examples
 
-num = { version = "0.3.1", default-features = false, features = [ "libm"] , optional = true }
-num-derive = { version = "0.3.3", default-features = false, optional = true }
-num-traits = { version = "0.2.14", default-features = false, optional = true }
+num = { version = "0.4.3", default-features = false, features = [ "libm"] , optional = true }
+num-derive = { version = "0.4.2", default-features = false, optional = true }
+num-traits = { version = "0.2.19", default-features = false, optional = true }
 
 
 # - dev dependencies ----------------------------------------------------------
 
 [dev-dependencies]
 panic-itm = { version = "0.4.2" }
-panic-halt = "0.2.0"
-panic-semihosting = { version = "0.5.6" }
+panic-halt = "1.0.0"
+panic-semihosting = { version = "0.6.0" }
 
 
 # - features ------------------------------------------------------------------

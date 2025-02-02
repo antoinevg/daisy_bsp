@@ -62,7 +62,7 @@ fn main() -> ! {
     let sai1_prec = ccdr
         .peripheral
         .SAI1
-        .kernel_clk_mux(hal::rcc::rec::Sai1ClkSel::PLL3_P);
+        .kernel_clk_mux(hal::rcc::rec::Sai1ClkSel::Pll3P);
 
     let audio_interface =
         audio::Interface::init(&ccdr.clocks, sai1_prec, pins, ccdr.peripheral.DMA1).unwrap();

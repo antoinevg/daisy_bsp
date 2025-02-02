@@ -213,7 +213,7 @@ impl<'a> Interface<'a> {
             sai1.enable_dma(SaiChannel::ChannelA);
 
             // wait until sai1's fifo starts to receive data
-            while sai1_rb.cha.sr.read().flvl().is_empty() {}
+            while sai1_rb.cha().sr.read().flvl().is_empty() {}
 
             sai1.enable();
 

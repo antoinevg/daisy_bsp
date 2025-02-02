@@ -34,14 +34,20 @@ fn main() -> ! {
         .freeze(pwrcfg, &dp.SYSCFG);
 
     // switch adc_ker_ck_input multiplexer to per_ck
-    ccdr.peripheral.kernel_adc_clk_mux(AdcClkSel::PER);
+    ccdr.peripheral.kernel_adc_clk_mux(AdcClkSel::Per);
 
     // - adc ------------------------------------------------------------------
 
     let mut delay = Delay::new(cp.SYST, ccdr.clocks);
-    let mut adc1 =
-        adc::Adc::adc1(dp.ADC1, &mut delay, ccdr.peripheral.ADC12, &ccdr.clocks).enable();
-    adc1.set_resolution(adc::Resolution::SIXTEENBIT);
+    let mut adc1 = adc::Adc::adc1(
+        dp.ADC1,
+        4.MHz(),
+        &mut delay,
+        ccdr.peripheral.ADC12,
+        &ccdr.clocks,
+    )
+    .enable();
+    adc1.set_resolution(adc::Resolution::SixteenBit);
 
     let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
     let mut adc1_channel_4 = gpioc.pc4.into_analog(); // pot 1
