@@ -2,23 +2,22 @@
 #![no_std]
 
 use core::cell::RefCell;
-use cortex_m::interrupt::Mutex;
+use core::ptr::addr_of_mut;
 
 use cortex_m::asm;
+use cortex_m::interrupt::Mutex;
 use cortex_m_rt::entry;
 use panic_semihosting as _;
 
-use daisy_bsp as daisy;
-
-use daisy::hal;
+use daisy_bsp::hal;
 use hal::prelude::*;
 
-use daisy::pac;
+use daisy_bsp::pac;
 use pac::interrupt;
 
-use daisy::audio;
-use daisy::led::Led;
-use daisy::loggit;
+use daisy_bsp::audio;
+use daisy_bsp::led::Led;
+use daisy_bsp::loggit;
 
 mod dsp;
 use dsp::osc;
@@ -33,7 +32,7 @@ static AUDIO_INTERFACE: Mutex<RefCell<Option<audio::Interface>>> = Mutex::new(Re
 fn main() -> ! {
     // - board setup ----------------------------------------------------------
 
-    let board = daisy::Board::take().unwrap();
+    let board = daisy_bsp::Board::take().unwrap();
 
     let dp = pac::Peripherals::take().unwrap();
 
@@ -49,7 +48,7 @@ fn main() -> ! {
         dp.GPIOG.split(ccdr.peripheral.GPIOG),
     );
 
-    let mut led_user = daisy::led::UserLed::new(pins.LED_USER);
+    let mut led_user = daisy_bsp::led::UserLed::new(pins.LED_USER);
 
     let pins = (
         pins.AK4556.PDN.into_push_pull_output(),
@@ -76,10 +75,12 @@ fn main() -> ! {
         fn callback(fs: f32, block: &mut audio::Block) {
             static mut OSC_1: osc::Wavetable = osc::Wavetable::new(osc::Shape::Sin);
             static mut OSC_2: osc::Wavetable = osc::Wavetable::new(osc::Shape::Saw);
-            unsafe { OSC_1.dx = (1. / fs) * 110.00 };
-            unsafe { OSC_2.dx = (1. / fs) * 110.00 };
+            let osc_1: &'static mut osc::Wavetable = unsafe { &mut *addr_of_mut!(OSC_1) };
+            let osc_2: &'static mut osc::Wavetable = unsafe { &mut *addr_of_mut!(OSC_2) };
+            osc_1.dx = (1. / fs) * 110.00;
+            osc_2.dx = (1. / fs) * 110.00;
             for frame in block {
-                *frame = (unsafe { OSC_1.step() }, unsafe { OSC_2.step() });
+                *frame = (osc_1.step(), osc_2.step());
             }
         }
 

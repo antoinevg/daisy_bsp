@@ -3,6 +3,8 @@ extern crate alloc;
 #[cfg(any(feature = "alloc"))]
 use alloc::boxed::Box;
 
+use core::ptr::addr_of_mut;
+
 use hal::pac;
 use stm32h7xx_hal as hal;
 
@@ -95,7 +97,8 @@ impl<'a> Interface<'a> {
             dma::dma::StreamsTuple::new(unsafe { pac::Peripherals::steal().DMA1 }, dma1_rec);
 
         // dma1 stream 0
-        let tx_buffer: &'static mut [u32; DMA_BUFFER_LENGTH] = unsafe { &mut TX_BUFFER };
+        let tx_buffer: &'static mut [u32; DMA_BUFFER_LENGTH] =
+            unsafe { &mut *addr_of_mut!(TX_BUFFER) };
         let dma_config = dma::dma::DmaConfig::default()
             .priority(dma::config::Priority::High)
             .memory_increment(true)
@@ -111,7 +114,8 @@ impl<'a> Interface<'a> {
         );
 
         // dma1 stream 1
-        let rx_buffer: &'static mut [u32; DMA_BUFFER_LENGTH] = unsafe { &mut RX_BUFFER };
+        let rx_buffer: &'static mut [u32; DMA_BUFFER_LENGTH] =
+            unsafe { &mut *addr_of_mut!(RX_BUFFER) };
         let dma_config = dma_config
             .transfer_complete_interrupt(true)
             .half_transfer_interrupt(true);
