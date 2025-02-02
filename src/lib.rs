@@ -19,6 +19,8 @@ pub mod itm;
 pub mod led;
 pub mod midi;
 pub mod pins;
+#[cfg(any(feature = "fmc"))]
+pub mod sdram;
 
 // - log macros ---------------------------------------------------------------
 

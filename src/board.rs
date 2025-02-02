@@ -25,6 +25,9 @@ impl Board {
             if unsafe { TAKEN } {
                 None
             } else {
+                unsafe {
+                    TAKEN = true;
+                }
                 Some(unsafe { Board::steal() })
             }
         })
@@ -55,6 +58,9 @@ impl Board {
         gpioe: hal::gpio::gpioe::Parts,
         gpiof: hal::gpio::gpiof::Parts,
         gpiog: hal::gpio::gpiog::Parts,
+        #[allow(unused_variables)] // GPIO H is only utilized on Daisy 1.1
+        gpioh: hal::gpio::gpioh::Parts,
+        gpioi: hal::gpio::gpioi::Parts,
     ) -> Pins {
         Pins {
             SEED_PIN_0: gpiob.pb12,
@@ -105,7 +111,65 @@ impl Board {
                 SCK: gpiof.pf10,
                 CS: gpiog.pg6,
             },
-            SDRAM: (),
+            SDRAM: SDRAMPins {
+                A0: gpiof.pf0,
+                A1: gpiof.pf1,
+                A2: gpiof.pf2,
+                A3: gpiof.pf3,
+                A4: gpiof.pf4,
+                A5: gpiof.pf5,
+                A6: gpiof.pf12,
+                A7: gpiof.pf13,
+                A8: gpiof.pf14,
+                A9: gpiof.pf15,
+                A10: gpiog.pg0,
+                A11: gpiog.pg1,
+                A12: gpiog.pg2,
+                BA0: gpiog.pg4,
+                BA1: gpiog.pg5,
+                D0: gpiod.pd14,
+                D1: gpiod.pd15,
+                D2: gpiod.pd0,
+                D3: gpiod.pd1,
+                D4: gpioe.pe7,
+                D5: gpioe.pe8,
+                D6: gpioe.pe9,
+                D7: gpioe.pe10,
+                D8: gpioe.pe11,
+                D9: gpioe.pe12,
+                D10: gpioe.pe13,
+                D11: gpioe.pe14,
+                D12: gpioe.pe15,
+                D13: gpiod.pd8,
+                D14: gpiod.pd9,
+                D15: gpiod.pd10,
+                D16: gpioh.ph8,
+                D17: gpioh.ph9,
+                D18: gpioh.ph10,
+                D19: gpioh.ph11,
+                D20: gpioh.ph12,
+                D21: gpioh.ph13,
+                D22: gpioh.ph14,
+                D23: gpioh.ph15,
+                D24: gpioi.pi0,
+                D25: gpioi.pi1,
+                D26: gpioi.pi2,
+                D27: gpioi.pi3,
+                D28: gpioi.pi6,
+                D29: gpioi.pi7,
+                D30: gpioi.pi9,
+                D31: gpioi.pi10,
+                NBL0: gpioe.pe0,
+                NBL1: gpioe.pe1,
+                NBL2: gpioi.pi4,
+                NBL3: gpioi.pi5,
+                SDCKE0: gpioh.ph2,
+                SDCLK: gpiog.pg8,
+                SDNCAS: gpiog.pg15,
+                SDNE0: gpioh.ph3,
+                SDRAS: gpiof.pf11,
+                SDNWE: gpioh.ph5,
+            },
             USB2: USB2Pins {
                 DN: gpioa.pa11, // USB2 D-
                 DP: gpioa.pa12, // USB2 D+
@@ -181,5 +245,30 @@ macro_rules! board_split_leds {
         daisy_bsp::led::Leds {
             USER: daisy_bsp::led::LedUser::new($pins.LED_USER),
         }
+    }};
+}
+
+/// Configure SDRAM memory and retrieve its handle.
+#[macro_export]
+macro_rules! board_split_sdram {
+    ($cp:expr, $dp:expr, $ccdr:expr, $pins:expr) => {{
+        use daisy_bsp::hal::delay::DelayFromCountDownTimer;
+        use daisy_bsp::hal::prelude::*;
+        let mut delay = DelayFromCountDownTimer::new($dp.TIM3.timer(
+            100.Hz(),
+            $ccdr.peripheral.TIM3,
+            &$ccdr.clocks,
+        ));
+        let sdram = daisy_bsp::sdram::SDRAM::new(
+            $pins.SDRAM,
+            &$ccdr.clocks,
+            $dp.FMC,
+            $ccdr.peripheral.FMC,
+            &mut $cp.MPU,
+            &mut $cp.SCB,
+            &mut delay,
+        );
+        delay.free().free();
+        sdram
     }};
 }

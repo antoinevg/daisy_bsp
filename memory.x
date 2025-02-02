@@ -4,8 +4,6 @@
  *      https://github.com/mtthw-meyer/libdaisy-rust/blob/master/memory.x
  */
 
-/*ENTRY(Reset_Handler)*/
-
 MEMORY
 {
     FLASH     (RX)  : ORIGIN = 0x08000000, LENGTH = 128K
@@ -50,4 +48,18 @@ SECTIONS
 
         PROVIDE(__sdram_bss_end = _esdram_bss);
     } > SDRAM
+
+    .sram (NOLOAD) :
+    {
+        . = ALIGN(4);
+        _ssram = .;
+
+        PROVIDE(__sram_start__ = _sram);
+        *(.sram)
+        *(.sram*)
+        . = ALIGN(4);
+        _esram = .;
+
+        PROVIDE(__sram_end__ = _esram);
+    } > SRAM
 }
