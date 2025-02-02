@@ -1,20 +1,20 @@
 #![no_main]
 #![no_std]
 
+use cortex_m::asm;
 use cortex_m_rt::entry;
-use panic_semihosting as _;
+use panic_itm as _;
 
-use daisy::hal::prelude::*;
-use daisy::led::Led;
-use daisy::loggit;
-use daisy_bsp as daisy;
+use daisy_bsp::hal::prelude::*;
+use daisy_bsp::led::Led;
+use daisy_bsp::loggit;
 
 #[entry]
 fn main() -> ! {
     // - board setup ----------------------------------------------------------
 
-    let board = daisy::Board::take().unwrap();
-    let dp = daisy::pac::Peripherals::take().unwrap();
+    let board = daisy_bsp::Board::take().unwrap();
+    let dp = daisy_bsp::pac::Peripherals::take().unwrap();
 
     let ccdr = board.freeze_clocks(dp.PWR.constrain(), dp.RCC.constrain(), &dp.SYSCFG);
 
@@ -30,7 +30,7 @@ fn main() -> ! {
         dp.GPIOG.split(ccdr.peripheral.GPIOG),
     );
 
-    let mut led_user = daisy::led::UserLed::new(pins.LED_USER);
+    let mut user_led = daisy_bsp::led::UserLed::new(pins.LED_USER);
 
     // - main loop ------------------------------------------------------------
 
@@ -41,9 +41,9 @@ fn main() -> ! {
         loggit!("ping: {}", counter);
         counter += 1;
 
-        led_user.on();
-        cortex_m::asm::delay(one_second);
-        led_user.off();
-        cortex_m::asm::delay(one_second);
+        user_led.on();
+        asm::delay(one_second);
+        user_led.off();
+        asm::delay(one_second);
     }
 }
