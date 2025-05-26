@@ -37,6 +37,8 @@ fn main() -> ! {
         dp.GPIOE.split(ccdr.peripheral.GPIOE),
         dp.GPIOF.split(ccdr.peripheral.GPIOF),
         dp.GPIOG.split(ccdr.peripheral.GPIOG),
+        dp.GPIOH.split(ccdr.peripheral.GPIOH),
+        dp.GPIOI.split(ccdr.peripheral.GPIOI),
     );
 
     // - adc ------------------------------------------------------------------
